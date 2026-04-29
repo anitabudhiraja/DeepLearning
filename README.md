@@ -87,8 +87,8 @@ Alongside the executable code, the repository contains extensive theoretical doc
 
 ### Clone the Repository
 ```bash
-git clone [https://github.com/your-username/deeplearning.git](https://github.com/your-username/deeplearning.git)
-cd deeplearning
+git clone https://github.com/anitabudhiraja/DeepLearning.git
+cd DeepLearning
 ```
 
 ### Launch the Environment
