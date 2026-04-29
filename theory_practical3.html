@@ -371,12 +371,25 @@
         footer span {
             color: var(--accent);
         }
+
+        @media(max-width:600px) {
+
+            .hero,
+            .content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .back-link span {
+                display: none;
+            }
+        }
     </style>
 </head>
 
 <body>
     <header>
-        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" /></div>
+        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" onerror="this.style.display='none'"></div>
         <div class="header-text">
             <h1>NIELIT Ropar</h1>
             <p>Deep Learning Techniques · DOAI250006</p>
@@ -402,9 +415,7 @@
                 <h3>Aim</h3>
             </div>
             <div class="section-box">
-                <p>To design and train a binary classification ANN model that predicts whether a patient is at risk of a
-                    disease (e.g., diabetes) based on clinical features, and evaluate it using accuracy, precision,
-                    recall, and ROC-AUC metrics.</p>
+                <p>To design, train, and evaluate a binary classification Artificial Neural Network (ANN) that predicts whether a breast cancer tumor is malignant or benign based on standardized clinical features, evaluating its performance via accuracy metrics and a confusion matrix.</p>
             </div>
         </div>
 
@@ -414,12 +425,12 @@
             </div>
             <div class="section-box">
                 <div class="prereq-grid">
+                    <div class="prereq-tag">Python & Scikit-learn</div>
+                    <div class="prereq-tag">Feature Scaling</div>
+                    <div class="prereq-tag">ANN Architecture</div>
                     <div class="prereq-tag">Sigmoid Activation</div>
                     <div class="prereq-tag">Binary Cross-Entropy</div>
-                    <div class="prereq-tag">Pandas / Scikit-learn</div>
-                    <div class="prereq-tag">Feature Scaling</div>
-                    <div class="prereq-tag">ROC Curve & AUC</div>
-                    <div class="prereq-tag">Class Imbalance</div>
+                    <div class="prereq-tag">Confusion Matrix</div>
                 </div>
             </div>
         </div>
@@ -429,28 +440,10 @@
                 <h3>Theory</h3>
             </div>
             <div class="section-box">
-                <p><strong>Binary classification</strong> is the task of predicting one of two possible outcomes — such
-                    as disease-positive (1) or disease-negative (0). In healthcare AI, this is critical for early risk
-                    screening. An ANN for binary classification outputs a single probability value in (0,1) using the
-                    <strong>sigmoid activation</strong> function: σ(z) = 1 / (1 + e^(-z)).</p>
-                <p>The <strong>binary cross-entropy (log loss)</strong> function is the standard loss for binary
-                    classification: L = -[y·log(p) + (1-y)·log(1-p)], where y ∈ {0,1} is the true label and p is the
-                    predicted probability. This penalizes confident wrong predictions heavily, guiding the model toward
-                    accurate probability estimates.</p>
-                <p>Real-world medical datasets like the <strong>Pima Indians Diabetes Dataset</strong> contain tabular
-                    features such as glucose concentration, BMI, blood pressure, age, and insulin levels. These features
-                    are on different scales, so <strong>feature standardization</strong> (z-score normalization: x_std =
-                    (x - μ) / σ) is essential. Without it, features with large magnitudes (e.g., glucose ~100-200) would
-                    dominate gradient updates over small-magnitude features.</p>
-                <p>Medical datasets are often <strong>class-imbalanced</strong> — far more healthy patients than sick
-                    ones. A model that always predicts "healthy" could still achieve high accuracy but would be
-                    clinically useless. Therefore, we report <strong>precision</strong> (TP / (TP + FP)),
-                    <strong>recall</strong> (TP / (TP + FN)), <strong>F1-score</strong>, and <strong>AUC-ROC</strong> as
-                    more meaningful metrics. AUC measures the model's ability to discriminate between classes across all
-                    decision thresholds.</p>
-                <p>The decision threshold is typically set at 0.5 (if p ≥ 0.5 → predict positive), but this can be
-                    tuned. A lower threshold increases recall (fewer missed cases) at the cost of precision (more false
-                    alarms) — a trade-off that is context-dependent in clinical settings.</p>
+                <p><strong>Binary classification</strong> is the core machine learning task of predicting one of two possible outcomes — such as disease-positive (1) or disease-negative (0). In healthcare AI, this is critical for early risk screening and automated diagnostics. An ANN designed for binary classification must output a single probability value in the range of (0,1). This is achieved by placing exactly one neuron in the final layer equipped with the <strong>sigmoid activation</strong> function: σ(z) = 1 / (1 + e^(-z)).</p>
+                <p>The <strong>binary cross-entropy</strong> (or log loss) function is the standard mathematical loss for binary classification: <em>L = -[y·log(p) + (1-y)·log(1-p)]</em>. It heavily penalizes the network when it makes a confident prediction that is entirely wrong, guiding the Adam optimizer to quickly adjust the weights in the correct direction.</p>
+                <p>In this practical, we utilize the <strong>Breast Cancer Dataset</strong> from Scikit-Learn. It contains 569 patient samples, each with 30 numeric clinical features (like tumor radius, texture, area, and smoothness). Because these features exist on wildly different numerical scales (e.g., area might be ~1000 while smoothness is ~0.1), <strong>feature standardization</strong> (using `StandardScaler`) is mandatory. Without scaling, features with large magnitudes would dominate the gradient updates, leading to a biased or non-converging model.</p>
+                <p>While accuracy is a good starting metric, medical diagnostics require deeper evaluation. We use a <strong>Confusion Matrix</strong> to visualize the network's predictions. It breaks down the results into True Positives (correctly identified), True Negatives, False Positives (Type I error / false alarm), and False Negatives (Type II error / missed diagnosis). In cancer screening, minimizing False Negatives is heavily prioritized.</p>
             </div>
         </div>
 
@@ -460,16 +453,17 @@
             </div>
             <div class="section-box">
                 <ol>
-                    <li>Load the Pima Indians Diabetes Dataset using pandas.</li>
-                    <li>Identify input features (X) and target column (y: 0 or 1).</li>
-                    <li>Handle missing values (replace 0s in glucose/BMI with column mean).</li>
-                    <li>Split into train/test sets (80/20) using train_test_split.</li>
-                    <li>Standardize features using StandardScaler (fit on train, transform both).</li>
-                    <li>Build Sequential model: Dense(16, relu) → Dense(8, relu) → Dense(1, sigmoid).</li>
-                    <li>Compile with optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'].</li>
-                    <li>Train for 50–100 epochs with a batch size of 32.</li>
-                    <li>Evaluate on test set: accuracy, classification report, confusion matrix.</li>
-                    <li>Plot ROC curve and compute AUC score.</li>
+                    <li>Import required libraries: `tensorflow`, `pandas`, `sklearn.datasets`, `sklearn.preprocessing`, and visualization tools (`matplotlib`, `seaborn`).</li>
+                    <li>Load the breast cancer dataset using `load_breast_cancer()`.</li>
+                    <li>Extract the feature matrix (`X`) and the target labels (`y`).</li>
+                    <li>Split the data into training (80%) and testing (20%) sets using `train_test_split`.</li>
+                    <li>Initialize a `StandardScaler`. Fit it <strong>only</strong> on the training data, then transform both the training and testing sets to prevent data leakage.</li>
+                    <li>Build a Sequential ANN model with three layers: `Dense(32, relu)` → `Dense(16, relu)` → `Dense(1, sigmoid)`.</li>
+                    <li>Compile the model specifying `adam` as the optimizer, `binary_crossentropy` as the loss, and tracking the `accuracy` metric.</li>
+                    <li>Train the model using `model.fit()` for 50 epochs with a batch size of 16 and a validation split of 20%.</li>
+                    <li>Evaluate the final model on the unseen test set to retrieve the test accuracy and loss.</li>
+                    <li>Generate prediction probabilities for the test set, convert them to binary labels (0 or 1) using a 0.5 threshold, and compute the `confusion_matrix`.</li>
+                    <li>Visualize the confusion matrix as a heatmap using Seaborn.</li>
                 </ol>
             </div>
         </div>
@@ -479,61 +473,47 @@
                 <h3>Key Code Concepts</h3>
             </div>
             <div class="section-box">
-                <p class="code-label">Snippet 1 — Data Loading and Preprocessing</p>
+                <p class="code-label">Snippet 1 — Data Splitting and Safe Scaling</p>
                 <div class="code-block">
-                    <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+                    <pre><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
 <span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> <span class="cls">StandardScaler</span>
-<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
 
-df = pd.<span class="fn">read_csv</span>(<span class="str">'diabetes.csv'</span>)
-X = df.drop(<span class="str">'Outcome'</span>, axis=<span class="num">1</span>).values
-y = df[<span class="str">'Outcome'</span>].values
+<span class="cm"># Split into training and testing sets (80% train, 20% test)</span>
+X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>)
 
-X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
-    X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>
-)
+<span class="cm"># Standardize the data to a mean of 0 and variance of 1</span>
 scaler = <span class="cls">StandardScaler</span>()
-X_train = scaler.<span class="fn">fit_transform</span>(X_train)
-X_test  = scaler.<span class="fn">transform</span>(X_test)</pre>
+X_train_scaled = scaler.<span class="fn">fit_transform</span>(X_train)
+X_test_scaled = scaler.<span class="fn">transform</span>(X_test)</pre>
                 </div>
-                <p>Note that <strong>fit_transform</strong> is called only on training data. The same scaler (with
-                    train-set statistics) is then applied to test data using transform only — preventing data leakage.
-                </p>
+                <p>Crucially, <strong>fit_transform</strong> is only called on the training data. This calculates the mean and standard deviation from the training set and applies it. The exact same scaler is then applied to the test data using only <strong>transform</strong>. This ensures the model receives no statistical hints about the unseen test data (preventing "data leakage").</p>
 
-                <p class="code-label">Snippet 2 — Binary Classification Model</p>
+                <p class="code-label">Snippet 2 — Binary Classification Architecture</p>
                 <div class="code-block">
-                    <pre>model = keras.<span class="cls">Sequential</span>([
-    layers.<span class="cls">Dense</span>(<span class="num">16</span>, activation=<span class="str">'relu'</span>, input_shape=(X_train.shape[<span class="num">1</span>],)),
-    layers.<span class="cls">Dense</span>(<span class="num">8</span>,  activation=<span class="str">'relu'</span>),
-    layers.<span class="cls">Dense</span>(<span class="num">1</span>,  activation=<span class="str">'sigmoid'</span>)  <span class="cm"># output: probability</span>
+                    <pre>model = <span class="cls">tf</span>.keras.models.<span class="cls">Sequential</span>([
+    <span class="cm"># Input layer automatically handles the 30 features from the dataset</span>
+    <span class="cls">tf</span>.keras.layers.<span class="cls">Dense</span>(<span class="num">32</span>, activation=<span class="str">'relu'</span>, input_shape=(X_train_scaled.shape[<span class="num">1</span>],)),
+    <span class="cls">tf</span>.keras.layers.<span class="cls">Dense</span>(<span class="num">16</span>, activation=<span class="str">'relu'</span>),
+    <span class="cm"># Output layer for binary classification must have 1 neuron</span>
+    <span class="cls">tf</span>.keras.layers.<span class="cls">Dense</span>(<span class="num">1</span>, activation=<span class="str">'sigmoid'</span>)
 ])
-model.<span class="fn">compile</span>(
-    optimizer=<span class="str">'adam'</span>,
-    loss=<span class="str">'binary_crossentropy'</span>,
-    metrics=[<span class="str">'accuracy'</span>]
-)</pre>
-                </div>
-                <p>The final layer has <strong>1 neuron with sigmoid</strong> activation, outputting a scalar
-                    probability p ∈ (0,1). A threshold of 0.5 converts this to a binary prediction.</p>
 
-                <p class="code-label">Snippet 3 — ROC Curve and AUC</p>
+model.<span class="fn">compile</span>(optimizer=<span class="str">'adam'</span>, loss=<span class="str">'binary_crossentropy'</span>, metrics=[<span class="str">'accuracy'</span>])</pre>
+                </div>
+                <p>The network compresses the 30 clinical features down to 32 neurons, then to 16, and finally to 1. The <strong>sigmoid</strong> activation on the final neuron guarantees the output will be squashed strictly between 0 and 1, allowing it to be interpreted as the probability of the tumor being benign.</p>
+
+                <p class="code-label">Snippet 3 — Generating the Confusion Matrix</p>
                 <div class="code-block">
-                    <pre><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> roc_curve, roc_auc_score
-<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+                    <pre><span class="cm"># 1. Get continuous probability predictions [e.g., 0.12, 0.89, 0.45]</span>
+y_pred_prob = model.<span class="fn">predict</span>(X_test_scaled)
 
-y_proba = model.<span class="fn">predict</span>(X_test).flatten()
-fpr, tpr, _ = <span class="fn">roc_curve</span>(y_test, y_proba)
-auc = <span class="fn">roc_auc_score</span>(y_test, y_proba)
+<span class="cm"># 2. Threshold probabilities at 0.5 to get crisp binary classes [e.g., 0, 1, 0]</span>
+y_pred = (y_pred_prob > <span class="num">0.5</span>).<span class="fn">astype</span>(<span class="fn">int</span>)
 
-plt.<span class="fn">plot</span>(fpr, tpr, label=<span class="str">f"AUC = {auc:.3f}"</span>)
-plt.<span class="fn">plot</span>([<span class="num">0</span>,<span class="num">1</span>],[<span class="num">0</span>,<span class="num">1</span>],<span class="str">'--'</span>)
-plt.<span class="fn">xlabel</span>(<span class="str">"False Positive Rate"</span>)
-plt.<span class="fn">ylabel</span>(<span class="str">"True Positive Rate"</span>)
-plt.<span class="fn">legend</span>(); plt.<span class="fn">show</span>()</pre>
+<span class="cm"># 3. Compute array of True Positives, False Positives, etc.</span>
+cm = <span class="fn">confusion_matrix</span>(y_test, y_pred)</pre>
                 </div>
-                <p>The <strong>ROC curve</strong> plots TPR vs FPR at various thresholds. <strong>AUC = 1.0</strong>
-                    indicates perfect discrimination; AUC = 0.5 is random guessing. A typical well-trained model
-                    achieves AUC ≈ 0.80–0.85 on this dataset.</p>
+                <p>Neural networks output floats. To compare the network's predictions against the true labels (which are crisp 0s and 1s), we must apply a threshold boundary. Values above 0.5 are classified as 1 (Benign), and values below 0.5 are classified as 0 (Malignant).</p>
             </div>
         </div>
 
@@ -542,14 +522,9 @@ plt.<span class="fn">legend</span>(); plt.<span class="fn">show</span>()</pre>
                 <h3>Expected Output</h3>
             </div>
             <div class="section-box">
-                <p><strong>Test Accuracy:</strong> Approximately 75–82% on the Pima Diabetes dataset, depending on
-                    architecture and hyperparameters.</p>
-                <p><strong>Classification Report:</strong> Shows precision, recall, and F1-score for both classes (0:
-                    healthy, 1: diabetic). Recall for class 1 is the most clinically important metric.</p>
-                <p><strong>ROC Curve:</strong> A curve that bows toward the upper-left corner (above the diagonal dashed
-                    line), with AUC typically in the range 0.80–0.87.</p>
-                <p><strong>Confusion Matrix:</strong> A 2×2 matrix showing true positives (correctly predicted
-                    diabetic), true negatives, false positives, and false negatives.</p>
+                <p><strong>Training Logs:</strong> Text output showing the model training over 50 epochs. You will see the <code>loss</code> steadily dropping towards 0.05 and the <code>accuracy</code> climbing towards 98%.</p>
+                <p><strong>Test Accuracy:</strong> A printed line displaying the model's accuracy on the unseen test dataset. Given the relatively clean nature of the Breast Cancer dataset and the use of scaling, this test accuracy typically exceeds <strong>96% to 98%</strong>.</p>
+                <p><strong>Confusion Matrix Heatmap:</strong> A colorful 2x2 grid generated by Seaborn. The top-left (True Malignant) and bottom-right (True Benign) squares will display high numbers, indicating correct predictions. The top-right and bottom-left squares (the errors) will contain numbers very close to zero, reflecting the model's high accuracy.</p>
             </div>
         </div>
 
@@ -559,47 +534,24 @@ plt.<span class="fn">legend</span>(); plt.<span class="fn">show</span>()</pre>
             </div>
             <div class="section-box">
                 <div class="viva-item">
-                    <div class="viva-q">Q1. Why is the output layer of a binary classification ANN a single sigmoid
-                        neuron?</div>
-                    <div class="viva-a">The sigmoid function maps any real-valued input to a value in (0,1), which can
-                        be interpreted as a probability. For binary classification, we need exactly one output
-                        probability p = P(class=1|x). A threshold (usually 0.5) converts this to a class label: predict
-                        1 if p ≥ 0.5, else 0.</div>
+                    <div class="viva-q">Q1. Why is the output layer of a binary classification ANN a single neuron with a Sigmoid activation?</div>
+                    <div class="viva-a">The sigmoid mathematical function uniquely maps any real-valued input (from negative infinity to positive infinity) strictly to a range between 0 and 1. This allows the single output to be directly interpreted as a probability (e.g., 0.85 = 85% chance of being class 1). A threshold is then used to convert this probability into a definitive binary choice.</div>
                 </div>
                 <div class="viva-item">
-                    <div class="viva-q">Q2. What is the difference between accuracy and AUC-ROC, and when is AUC
-                        preferred?</div>
-                    <div class="viva-a">Accuracy = (TP+TN)/(TP+TN+FP+FN) measures overall correctness but is misleading
-                        on imbalanced datasets. If 90% of patients are healthy, a model that always predicts "healthy"
-                        has 90% accuracy but fails completely at detecting disease. AUC-ROC measures discrimination
-                        ability across all thresholds and is threshold-independent, making it more reliable for
-                        imbalanced binary classification in clinical settings.</div>
+                    <div class="viva-q">Q2. Why do we use StandardScaler, and why is it only 'fit' on the training data?</div>
+                    <div class="viva-a">StandardScaler normalizes features to have a mean of 0 and standard deviation of 1, ensuring features with large numerical ranges don't overwhelm the neural network. We only `fit` it on the training data to calculate the mean/variance. If we fit it on the test data as well, we would be injecting statistical information about the test set into the training process, causing an error known as "Data Leakage."</div>
                 </div>
                 <div class="viva-item">
-                    <div class="viva-q">Q3. What is data leakage and how is it avoided when standardizing features?
-                    </div>
-                    <div class="viva-a">Data leakage occurs when information from the test set influences training,
-                        leading to over-optimistic performance estimates. To avoid it, StandardScaler is fit only on
-                        training data (computing mean and std from training set), and the same fitted scaler is then
-                        applied (transform only) to the test set. Using fit_transform on the test set would leak test
-                        statistics into the preprocessing step.</div>
+                    <div class="viva-q">Q3. What is binary cross-entropy loss?</div>
+                    <div class="viva-a">Binary cross-entropy is a loss function specifically designed for 2-class problems. It heavily penalizes the model when it makes a confident prediction that is entirely wrong (for instance, predicting a 99% probability for Class 1 when the true label is 0). This exponential penalty helps the optimizer adjust the network's weights quickly.</div>
                 </div>
                 <div class="viva-item">
-                    <div class="viva-q">Q4. Define precision and recall. Which is more important in disease detection?
-                    </div>
-                    <div class="viva-a">Precision = TP / (TP + FP) — of all predicted positives, how many are actually
-                        positive. Recall = TP / (TP + FN) — of all actual positives, how many did we detect. In disease
-                        detection, recall is typically more critical — missing a true case (false negative) has severe
-                        consequences. A model should be tuned to maximize recall even at the cost of lower precision
-                        (more false alarms that can be resolved by further testing).</div>
+                    <div class="viva-q">Q4. What exactly does the Confusion Matrix show?</div>
+                    <div class="viva-a">A confusion matrix is a 2x2 table that breaks down the raw accuracy metric. It displays the counts of True Positives (correctly identified class 1), True Negatives (correctly identified class 0), False Positives (predicting 1 when it's actually 0), and False Negatives (predicting 0 when it's actually 1). It helps determine if a model is biased towards a specific class.</div>
                 </div>
                 <div class="viva-item">
-                    <div class="viva-q">Q5. What is binary cross-entropy loss and how does it penalize wrong
-                        predictions?</div>
-                    <div class="viva-a">Binary cross-entropy L = -[y·log(p) + (1-y)·log(1-p)]. When y=1 and p is near 0,
-                        log(p) approaches -∞, producing a very large loss. When y=0 and p is near 1, log(1-p) approaches
-                        -∞ similarly. This means the loss grows very rapidly when the model confidently predicts the
-                        wrong class, strongly penalizing such errors during training.</div>
+                    <div class="viva-q">Q5. Why use ReLU activation in the hidden layers instead of Sigmoid?</div>
+                    <div class="viva-a">The ReLU (Rectified Linear Unit) function simply outputs the input if it's positive, and outputs 0 if it's negative. Unlike Sigmoid, ReLU does not suffer from the "vanishing gradient problem," allowing the neural network to learn much faster and more effectively during the backpropagation process.</div>
                 </div>
             </div>
         </div>
