@@ -389,7 +389,7 @@
 
 <body>
     <header>
-        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" /></div>
+        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" onerror="this.style.display='none'" /></div>
         <div class="header-text">
             <h1>NIELIT Ropar</h1>
             <p>Deep Learning Techniques · DOAI250006</p>
@@ -433,7 +433,7 @@
                     <div class="prereq-tag">Matplotlib Basics</div>
                     <div class="prereq-tag">TensorFlow / Keras</div>
                     <div class="prereq-tag">Image Representation</div>
-                    <div class="prereq-tag">Data Normalization</div>
+                    <div class="prereq-tag">Data Visualization</div>
                 </div>
             </div>
         </div>
@@ -449,18 +449,14 @@
                     handwritten digits (0–9), each of size 28×28 pixels. The dataset is split into 60,000 training
                     samples and 10,000 test samples. Each pixel value ranges from 0 (black) to 255 (white), representing
                     the intensity of that pixel.</p>
-                <p>In deep learning, raw pixel values are almost always <strong>normalized</strong> before feeding into
-                    a model. Normalization scales each pixel to the range [0, 1] by dividing by 255. This ensures faster
-                    convergence during gradient descent and prevents numerical instability. Mathematically, x_normalized
-                    = x / 255.0, where x is the original pixel value.</p>
                 <p>The dataset is organized as a 3D NumPy array of shape <strong>(N, 28, 28)</strong> where N is the
                     number of samples. Each 28×28 matrix is a 2D representation of a digit image. For fully connected
                     neural networks, this 2D matrix must be <strong>flattened</strong> to a 1D vector of size 784
                     (28×28=784). For CNNs, a channel dimension is added, making the shape (N, 28, 28, 1).</p>
                 <p><strong>Visualization</strong> is critical for understanding data quality, class distribution, and
                     identifying anomalies. Using Matplotlib's imshow() function with the 'gray' colormap, we can render
-                    each 28×28 array as a human-readable digit image. Histograms of pixel distributions help reveal the
-                    contrast and brightness characteristics of the dataset, which informs decisions about preprocessing.
+                    each 28×28 array as a human-readable digit image. Bar charts of class distributions help reveal if 
+                    the dataset is well balanced across all categories, which informs decisions about model training.
                 </p>
                 <p>The labels are integers 0–9 stored as a 1D array of shape (N,). For multi-class classification, these
                     must often be <strong>one-hot encoded</strong> — converting an integer label into a binary vector
@@ -476,19 +472,15 @@
             </div>
             <div class="section-box">
                 <ol>
-                    <li>Import required libraries: <code>tensorflow.keras</code>, <code>numpy</code>,
-                        <code>matplotlib.pyplot</code>.</li>
-                    <li>Load the MNIST dataset using <code>keras.datasets.mnist.load_data()</code> which returns
+                    <li>Import required libraries: <code>tensorflow</code>, <code>matplotlib.pyplot</code>, and <code>numpy</code>.</li>
+                    <li>Load the MNIST dataset using <code>tf.keras.datasets.mnist.load_data()</code> which returns
                         (x_train, y_train), (x_test, y_test).</li>
-                    <li>Print the shapes of training and test arrays to understand the data structure.</li>
-                    <li>Normalize pixel values from [0, 255] to [0.0, 1.0] by dividing both x_train and x_test by 255.0.
-                    </li>
-                    <li>Display the first 25 images from the training set in a 5×5 grid using Matplotlib subplots,
+                    <li>Print the shapes of training and test arrays to verify the tensor dimensions.</li>
+                    <li>Display the first 9 images from the training set in a 3×3 grid using Matplotlib subplots,
                         setting titles to their corresponding labels.</li>
-                    <li>Plot a histogram of pixel intensities for a single image to visualize distribution.</li>
-                    <li>Print the class distribution (count per digit 0–9) using numpy's unique() with
+                    <li>Calculate the class distribution (count per digit 0–9) using numpy's unique() with
                         return_counts=True.</li>
-                    <li>Optionally, plot a bar chart of class frequencies to check for class imbalance.</li>
+                    <li>Plot a bar chart of the class frequencies to visualize the dataset balance.</li>
                 </ol>
             </div>
         </div>
@@ -501,40 +493,40 @@
             <div class="section-box">
                 <p class="code-label">Snippet 1 — Loading and Inspecting MNIST</p>
                 <div class="code-block">
-                    <pre><span class="kw">from</span> tensorflow <span class="kw">import</span> keras
+                    <pre><span class="kw">import</span> tensorflow <span class="kw">as</span> tf
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
 <span class="kw">import</span> numpy <span class="kw">as</span> np
 
-<span class="cm"># Load dataset — already split into train/test</span>
-(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.<span class="fn">load_data</span>()
+<span class="cm"># Load the MNIST dataset</span>
+mnist = tf.keras.datasets.mnist
+(x_train, y_train), (x_test, y_test) = mnist.<span class="fn">load_data</span>()
 
-<span class="fn">print</span>(<span class="str">"Training images:"</span>, x_train.shape)  <span class="cm"># (60000, 28, 28)</span>
-<span class="fn">print</span>(<span class="str">"Training labels:"</span>, y_train.shape)  <span class="cm"># (60000,)</span>
-<span class="fn">print</span>(<span class="str">"Pixel range:"</span>, x_train.<span class="fn">min</span>(), <span class="str">"-"</span>, x_train.<span class="fn">max</span>())  <span class="cm"># 0 - 255</span>
-
-<span class="cm"># Normalize to [0, 1]</span>
-x_train = x_train / <span class="num">255.0</span>
-x_test  = x_test  / <span class="num">255.0</span></pre>
+<span class="cm"># Verify the dimensions of the tensors</span>
+<span class="fn">print</span>(<span class="str">f'Training data shape: {x_train.shape}'</span>)
+<span class="fn">print</span>(<span class="str">f'Training labels shape: {y_train.shape}'</span>)
+<span class="fn">print</span>(<span class="str">f'Test data shape: {x_test.shape}'</span>)
+<span class="fn">print</span>(<span class="str">f'Test labels shape: {y_test.shape}'</span>)</pre>
                 </div>
                 <p>The <strong>load_data()</strong> call automatically downloads the MNIST dataset (if not cached) and
-                    returns it as NumPy arrays. The division by 255.0 is element-wise, instantly normalizing the entire
-                    dataset.</p>
+                    returns it as NumPy arrays. We then print the shapes of these tensors to verify their dimensions.</p>
 
                 <p class="code-label">Snippet 2 — Visualizing a Grid of Images</p>
                 <div class="code-block">
-                    <pre><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+                    <pre><span class="cm"># Set up a matplotlib figure and axis grid</span>
+plt.<span class="fn">figure</span>(figsize=(<span class="num">10</span>, <span class="num">10</span>))
 
-fig, axes = plt.<span class="fn">subplots</span>(<span class="num">5</span>, <span class="num">5</span>, figsize=(<span class="num">8</span>, <span class="num">8</span>))
-<span class="kw">for</span> i, ax <span class="kw">in</span> <span class="fn">enumerate</span>(axes.<span class="fn">flat</span>):
-    ax.<span class="fn">imshow</span>(x_train[i], cmap=<span class="str">'gray'</span>)
-    ax.<span class="fn">set_title</span>(<span class="str">f"Label: {y_train[i]}"</span>, fontsize=<span class="num">8</span>)
-    ax.<span class="fn">axis</span>(<span class="str">'off'</span>)
-plt.<span class="fn">suptitle</span>(<span class="str">"First 25 MNIST Training Images"</span>)
+<span class="cm"># Iterate through the first 9 images in the training set</span>
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">9</span>):
+    plt.<span class="fn">subplot</span>(<span class="num">3</span>, <span class="num">3</span>, i + <span class="num">1</span>)
+    plt.<span class="fn">imshow</span>(x_train[i], cmap=<span class="str">'gray'</span>)
+    plt.<span class="fn">title</span>(<span class="str">f'Label: {y_train[i]}'</span>)
+    plt.<span class="fn">axis</span>(<span class="str">'off'</span>)
+
 plt.<span class="fn">tight_layout</span>()
 plt.<span class="fn">show</span>()</pre>
                 </div>
-                <p>The <strong>axes.flat</strong> iterator provides a convenient way to loop over all subplots in a 2D
-                    array of axes. The <strong>cmap='gray'</strong> argument renders the single-channel image in
-                    grayscale.</p>
+                <p>We use a <strong>for loop</strong> and <strong>plt.subplot(3, 3, i + 1)</strong> to arrange the first 9 images into a 3x3 grid. The <strong>cmap='gray'</strong> argument renders the single-channel image in
+                    grayscale, and <strong>plt.axis('off')</strong> hides the coordinate axes.</p>
 
                 <p class="code-label">Snippet 3 — Class Distribution Analysis</p>
                 <div class="code-block">
@@ -561,12 +553,10 @@ plt.<span class="fn">show</span>()</pre>
             </div>
             <div class="section-box">
                 <p><strong>Console Output:</strong> Shape prints confirming x_train = (60000, 28, 28), y_train =
-                    (60000,), x_test = (10000, 28, 28). Pixel values in [0.0, 1.0] after normalization.</p>
-                <p><strong>Figure 1:</strong> A 5×5 grid of grayscale digit images (0–9) with their correct labels shown
-                    as titles. Images appear clear and distinguishable.</p>
-                <p><strong>Figure 2:</strong> A histogram of pixel intensities for a sample image, typically bimodal — a
-                    peak near 0 (background) and a smaller peak at higher values (ink strokes).</p>
-                <p><strong>Figure 3:</strong> A bar chart showing ~5,000–7,000 samples per digit class, confirming a
+                    (60000,), x_test = (10000, 28, 28), and the Class Distribution dictionary.</p>
+                <p><strong>Figure 1:</strong> A 3×3 grid of the first 9 grayscale digit images (0–9) with their correct labels shown
+                    as titles. Images appear clear and distinguishable without coordinate axes.</p>
+                <p><strong>Figure 2:</strong> A bar chart showing ~5,000–7,000 samples per digit class, confirming a
                     well-balanced dataset with no significant class imbalance.</p>
             </div>
         </div>
@@ -584,7 +574,7 @@ plt.<span class="fn">show</span>()</pre>
                         digits 0 through 9, each of 28×28 pixel resolution.</div>
                 </div>
                 <div class="viva-item">
-                    <div class="viva-q">Q2. Why do we normalize pixel values before training a neural network?</div>
+                    <div class="viva-q">Q2. Why do we typically normalize pixel values before training a neural network?</div>
                     <div class="viva-a">Normalization scales inputs to a small, consistent range (e.g., [0,1]). This
                         prevents neurons with large input magnitudes from dominating gradient updates, leads to faster
                         convergence during stochastic gradient descent, and reduces the risk of vanishing or exploding
