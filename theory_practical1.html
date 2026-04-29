@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P01 — Loading & Visualizing MNIST | NIELIT Ropar</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --card: #16161f;
+            --border: #2a2a3a;
+            --accent: #00e5ff;
+            --accent2: #7c3aed;
+            --accent3: #f59e0b;
+            --text: #e8e8f0;
+            --muted: #7070a0;
+            --font-display: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-display);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(16px);
+        }
+
+        .logo-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .header-text h1 {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .header-text p {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            margin-left: auto;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 5px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 3rem 2rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pnum {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero h2 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h2 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .colab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(124, 58, 237, 0.15));
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .colab-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 58, 237, 0.25));
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .colab-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title h3 {
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border), transparent);
+        }
+
+        .section-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            opacity: 0.6;
+        }
+
+        p {
+            color: #c0c0d8;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        ol,
+        ul {
+            color: #c0c0d8;
+            padding-left: 1.5rem;
+            line-height: 1.8;
+        }
+
+        ol li,
+        ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #0d0d14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.7;
+            color: #c8e6ff;
+        }
+
+        .code-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .kw {
+            color: #c792ea;
+        }
+
+        .fn {
+            color: #82aaff;
+        }
+
+        .str {
+            color: #c3e88d;
+        }
+
+        .cm {
+            color: #546e7a;
+            font-style: italic;
+        }
+
+        .num {
+            color: #f78c6c;
+        }
+
+        .cls {
+            color: #ffcb6b;
+        }
+
+        .viva-item {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 0;
+        }
+
+        .viva-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .viva-q {
+            font-weight: 700;
+            color: var(--accent3);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .viva-a {
+            color: #c0c0d8;
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        .prereq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .prereq-tag {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+            color: #a78bfa;
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--muted);
+        }
+
+        footer span {
+            color: var(--accent);
+        }
+
+        @media(max-width:600px) {
+
+            .hero,
+            .content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .back-link span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" /></div>
+        <div class="header-text">
+            <h1>NIELIT Ropar</h1>
+            <p>Deep Learning Techniques · DOAI250006</p>
+        </div>
+        <a href="index.html" class="back-link">← Back</a>
+    </header>
+
+    <section class="hero">
+        <p class="pnum">// Practical — 01</p>
+        <h2>Loading and Visualizing the<br /><span>MNIST Handwritten Digit Dataset</span></h2>
+        <a href="https://colab.research.google.com/drive/1YeLXXdDh0db9c4ToH6hnXBUrMShNLVTo?usp=sharing" target="_blank"
+            class="colab-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+            </svg>
+            Open in Colab
+        </a>
+    </section>
+
+    <div class="content">
+        <!-- AIM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Aim</h3>
+            </div>
+            <div class="section-box">
+                <p>To load the MNIST handwritten digit dataset using Keras/TensorFlow, explore its structure, and
+                    visualize sample images along with their pixel intensity distributions.</p>
+            </div>
+        </div>
+
+        <!-- PREREQUISITES -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Prerequisites</h3>
+            </div>
+            <div class="section-box">
+                <div class="prereq-grid">
+                    <div class="prereq-tag">Python Programming</div>
+                    <div class="prereq-tag">NumPy Arrays</div>
+                    <div class="prereq-tag">Matplotlib Basics</div>
+                    <div class="prereq-tag">TensorFlow / Keras</div>
+                    <div class="prereq-tag">Image Representation</div>
+                    <div class="prereq-tag">Data Normalization</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THEORY -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Theory</h3>
+            </div>
+            <div class="section-box">
+                <p>The <strong>MNIST (Modified National Institute of Standards and Technology)</strong> dataset is one
+                    of the most widely used benchmarks in machine learning. It contains 70,000 grayscale images of
+                    handwritten digits (0–9), each of size 28×28 pixels. The dataset is split into 60,000 training
+                    samples and 10,000 test samples. Each pixel value ranges from 0 (black) to 255 (white), representing
+                    the intensity of that pixel.</p>
+                <p>In deep learning, raw pixel values are almost always <strong>normalized</strong> before feeding into
+                    a model. Normalization scales each pixel to the range [0, 1] by dividing by 255. This ensures faster
+                    convergence during gradient descent and prevents numerical instability. Mathematically, x_normalized
+                    = x / 255.0, where x is the original pixel value.</p>
+                <p>The dataset is organized as a 3D NumPy array of shape <strong>(N, 28, 28)</strong> where N is the
+                    number of samples. Each 28×28 matrix is a 2D representation of a digit image. For fully connected
+                    neural networks, this 2D matrix must be <strong>flattened</strong> to a 1D vector of size 784
+                    (28×28=784). For CNNs, a channel dimension is added, making the shape (N, 28, 28, 1).</p>
+                <p><strong>Visualization</strong> is critical for understanding data quality, class distribution, and
+                    identifying anomalies. Using Matplotlib's imshow() function with the 'gray' colormap, we can render
+                    each 28×28 array as a human-readable digit image. Histograms of pixel distributions help reveal the
+                    contrast and brightness characteristics of the dataset, which informs decisions about preprocessing.
+                </p>
+                <p>The labels are integers 0–9 stored as a 1D array of shape (N,). For multi-class classification, these
+                    must often be <strong>one-hot encoded</strong> — converting an integer label into a binary vector
+                    where only the index corresponding to the class is 1 and all others are 0. For example, label 3
+                    becomes [0,0,0,1,0,0,0,0,0,0].</p>
+            </div>
+        </div>
+
+        <!-- ALGORITHM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Algorithm / Step-by-Step</h3>
+            </div>
+            <div class="section-box">
+                <ol>
+                    <li>Import required libraries: <code>tensorflow.keras</code>, <code>numpy</code>,
+                        <code>matplotlib.pyplot</code>.</li>
+                    <li>Load the MNIST dataset using <code>keras.datasets.mnist.load_data()</code> which returns
+                        (x_train, y_train), (x_test, y_test).</li>
+                    <li>Print the shapes of training and test arrays to understand the data structure.</li>
+                    <li>Normalize pixel values from [0, 255] to [0.0, 1.0] by dividing both x_train and x_test by 255.0.
+                    </li>
+                    <li>Display the first 25 images from the training set in a 5×5 grid using Matplotlib subplots,
+                        setting titles to their corresponding labels.</li>
+                    <li>Plot a histogram of pixel intensities for a single image to visualize distribution.</li>
+                    <li>Print the class distribution (count per digit 0–9) using numpy's unique() with
+                        return_counts=True.</li>
+                    <li>Optionally, plot a bar chart of class frequencies to check for class imbalance.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- CODE CONCEPTS -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Key Code Concepts</h3>
+            </div>
+            <div class="section-box">
+                <p class="code-label">Snippet 1 — Loading and Inspecting MNIST</p>
+                <div class="code-block">
+                    <pre><span class="kw">from</span> tensorflow <span class="kw">import</span> keras
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># Load dataset — already split into train/test</span>
+(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.<span class="fn">load_data</span>()
+
+<span class="fn">print</span>(<span class="str">"Training images:"</span>, x_train.shape)  <span class="cm"># (60000, 28, 28)</span>
+<span class="fn">print</span>(<span class="str">"Training labels:"</span>, y_train.shape)  <span class="cm"># (60000,)</span>
+<span class="fn">print</span>(<span class="str">"Pixel range:"</span>, x_train.<span class="fn">min</span>(), <span class="str">"-"</span>, x_train.<span class="fn">max</span>())  <span class="cm"># 0 - 255</span>
+
+<span class="cm"># Normalize to [0, 1]</span>
+x_train = x_train / <span class="num">255.0</span>
+x_test  = x_test  / <span class="num">255.0</span></pre>
+                </div>
+                <p>The <strong>load_data()</strong> call automatically downloads the MNIST dataset (if not cached) and
+                    returns it as NumPy arrays. The division by 255.0 is element-wise, instantly normalizing the entire
+                    dataset.</p>
+
+                <p class="code-label">Snippet 2 — Visualizing a Grid of Images</p>
+                <div class="code-block">
+                    <pre><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+fig, axes = plt.<span class="fn">subplots</span>(<span class="num">5</span>, <span class="num">5</span>, figsize=(<span class="num">8</span>, <span class="num">8</span>))
+<span class="kw">for</span> i, ax <span class="kw">in</span> <span class="fn">enumerate</span>(axes.<span class="fn">flat</span>):
+    ax.<span class="fn">imshow</span>(x_train[i], cmap=<span class="str">'gray'</span>)
+    ax.<span class="fn">set_title</span>(<span class="str">f"Label: {y_train[i]}"</span>, fontsize=<span class="num">8</span>)
+    ax.<span class="fn">axis</span>(<span class="str">'off'</span>)
+plt.<span class="fn">suptitle</span>(<span class="str">"First 25 MNIST Training Images"</span>)
+plt.<span class="fn">tight_layout</span>()
+plt.<span class="fn">show</span>()</pre>
+                </div>
+                <p>The <strong>axes.flat</strong> iterator provides a convenient way to loop over all subplots in a 2D
+                    array of axes. The <strong>cmap='gray'</strong> argument renders the single-channel image in
+                    grayscale.</p>
+
+                <p class="code-label">Snippet 3 — Class Distribution Analysis</p>
+                <div class="code-block">
+                    <pre><span class="cm"># Count samples per digit class</span>
+classes, counts = np.<span class="fn">unique</span>(y_train, return_counts=<span class="kw">True</span>)
+<span class="fn">print</span>(<span class="str">"Class Distribution:"</span>, <span class="fn">dict</span>(<span class="fn">zip</span>(classes, counts)))
+
+<span class="cm"># Bar chart</span>
+plt.<span class="fn">bar</span>(classes, counts, color=<span class="str">'steelblue'</span>)
+plt.<span class="fn">xlabel</span>(<span class="str">"Digit Class"</span>)
+plt.<span class="fn">ylabel</span>(<span class="str">"Count"</span>)
+plt.<span class="fn">title</span>(<span class="str">"MNIST Training Set Class Distribution"</span>)
+plt.<span class="fn">show</span>()</pre>
+                </div>
+                <p>This reveals whether the dataset is balanced (approximately equal counts per class) or imbalanced.
+                    MNIST is nearly balanced with ~6,000 samples per digit.</p>
+            </div>
+        </div>
+
+        <!-- EXPECTED OUTPUT -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Expected Output</h3>
+            </div>
+            <div class="section-box">
+                <p><strong>Console Output:</strong> Shape prints confirming x_train = (60000, 28, 28), y_train =
+                    (60000,), x_test = (10000, 28, 28). Pixel values in [0.0, 1.0] after normalization.</p>
+                <p><strong>Figure 1:</strong> A 5×5 grid of grayscale digit images (0–9) with their correct labels shown
+                    as titles. Images appear clear and distinguishable.</p>
+                <p><strong>Figure 2:</strong> A histogram of pixel intensities for a sample image, typically bimodal — a
+                    peak near 0 (background) and a smaller peak at higher values (ink strokes).</p>
+                <p><strong>Figure 3:</strong> A bar chart showing ~5,000–7,000 samples per digit class, confirming a
+                    well-balanced dataset with no significant class imbalance.</p>
+            </div>
+        </div>
+
+        <!-- VIVA -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Viva Questions & Answers</h3>
+            </div>
+            <div class="section-box">
+                <div class="viva-item">
+                    <div class="viva-q">Q1. What does MNIST stand for and how many samples does it contain?</div>
+                    <div class="viva-a">MNIST stands for Modified National Institute of Standards and Technology. It
+                        contains 70,000 grayscale images — 60,000 for training and 10,000 for testing — of handwritten
+                        digits 0 through 9, each of 28×28 pixel resolution.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q2. Why do we normalize pixel values before training a neural network?</div>
+                    <div class="viva-a">Normalization scales inputs to a small, consistent range (e.g., [0,1]). This
+                        prevents neurons with large input magnitudes from dominating gradient updates, leads to faster
+                        convergence during stochastic gradient descent, and reduces the risk of vanishing or exploding
+                        gradients. Without normalization, weight updates may oscillate or diverge.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q3. What is one-hot encoding and when is it used for MNIST labels?</div>
+                    <div class="viva-a">One-hot encoding converts integer class labels into binary vectors. For MNIST
+                        with 10 classes, label 5 becomes [0,0,0,0,0,1,0,0,0,0]. It is used when the output layer uses a
+                        softmax activation with categorical cross-entropy loss, which requires target distributions
+                        rather than scalar class indices.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q4. What is the difference between the shape (60000, 28, 28) and (60000, 784)?
+                    </div>
+                    <div class="viva-a">Shape (60000, 28, 28) represents 60,000 2D images of size 28×28. Shape (60000,
+                        784) is the flattened version where each 28×28 image is unrolled into a 1D vector of 784 values
+                        (28×28=784). Flattening is required for Dense/fully-connected layers but CNNs operate on the 2D
+                        spatial structure.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q5. How would you check if MNIST is a balanced dataset?</div>
+                    <div class="viva-a">Use numpy.unique(y_train, return_counts=True) to compute the frequency of each
+                        class. If all 10 digit classes have approximately equal counts (~6,000 each for MNIST training
+                        set), the dataset is balanced. A bar chart of class frequencies visually confirms balance or
+                        reveals imbalance.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>NIELIT Ropar · M.Tech AI · Deep Learning Techniques <span>DOAI250006</span> · Practical 01</p>
+    </footer>
+</body>
+
+</html>

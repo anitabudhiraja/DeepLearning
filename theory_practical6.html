@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P06 — Image Data Augmentation using Keras | NIELIT Ropar</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --card: #16161f;
+            --border: #2a2a3a;
+            --accent: #00e5ff;
+            --accent2: #7c3aed;
+            --accent3: #f59e0b;
+            --text: #e8e8f0;
+            --muted: #7070a0;
+            --font-display: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-display);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(16px);
+        }
+
+        .logo-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .header-text h1 {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .header-text p {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            margin-left: auto;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 5px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 3rem 2rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pnum {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero h2 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h2 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .colab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(124, 58, 237, 0.15));
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .colab-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 58, 237, 0.25));
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .colab-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title h3 {
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border), transparent);
+        }
+
+        .section-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            opacity: 0.6;
+        }
+
+        p {
+            color: #c0c0d8;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        ol,
+        ul {
+            color: #c0c0d8;
+            padding-left: 1.5rem;
+            line-height: 1.8;
+        }
+
+        ol li,
+        ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #0d0d14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.7;
+            color: #c8e6ff;
+        }
+
+        .code-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .kw {
+            color: #c792ea;
+        }
+
+        .fn {
+            color: #82aaff;
+        }
+
+        .str {
+            color: #c3e88d;
+        }
+
+        .cm {
+            color: #546e7a;
+            font-style: italic;
+        }
+
+        .num {
+            color: #f78c6c;
+        }
+
+        .cls {
+            color: #ffcb6b;
+        }
+
+        .viva-item {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 0;
+        }
+
+        .viva-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .viva-q {
+            font-weight: 700;
+            color: var(--accent3);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .viva-a {
+            color: #c0c0d8;
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        .prereq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .prereq-tag {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+            color: #a78bfa;
+        }
+
+        /* Augmentation transform cards */
+        .transform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin: 1.25rem 0;
+        }
+
+        .transform-card {
+            background: #0d0d14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .transform-card .transform-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .transform-card .transform-name {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.3rem;
+        }
+
+        .transform-card .transform-desc {
+            font-size: 0.75rem;
+            color: #c0c0d8;
+            line-height: 1.5;
+        }
+
+        .transform-card .transform-code {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--muted);
+            margin-top: 0.4rem;
+            padding: 0.3rem 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--muted);
+        }
+
+        footer span {
+            color: var(--accent);
+        }
+
+        @media(max-width:600px) {
+
+            .hero,
+            .content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .back-link span {
+                display: none;
+            }
+
+            .transform-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+    <base target="_blank">
+</head>
+
+<body>
+    <header>
+        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" /></div>
+        <div class="header-text">
+            <h1>NIELIT Ropar</h1>
+            <p>Deep Learning Techniques &middot; DOAI250006</p>
+        </div>
+        <a href="index.html" class="back-link">&larr; Back</a>
+    </header>
+
+    <section class="hero">
+        <p class="pnum">// Practical &mdash; 06</p>
+        <h2>Image Data Augmentation<br /><span>using Keras Preprocessing Layers</span></h2>
+        <a href="https://colab.research.google.com/drive/1C9u0MgtQ9sZX3wxxA0Q7R7vhguR_owhd?usp=sharing" target="_blank"
+            class="colab-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+            </svg>
+            Open in Colab
+        </a>
+    </section>
+
+    <div class="content">
+
+        <!-- AIM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Aim</h3>
+            </div>
+            <div class="section-box">
+                <p>To understand and implement <strong>image data augmentation</strong> using Keras preprocessing layers
+                    as a regularization technique to artificially expand the training dataset. The practical
+                    demonstrates
+                    four randomized geometric and photometric transformations &mdash; horizontal/vertical flipping,
+                    rotation, zoom, and contrast adjustment &mdash; and shows how to embed the augmentation pipeline
+                    directly into a neural network model for GPU-accelerated on-the-fly augmentation during training.
+                </p>
+            </div>
+        </div>
+
+        <!-- PREREQUISITES -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Prerequisites</h3>
+            </div>
+            <div class="section-box">
+                <div class="prereq-grid">
+                    <div class="prereq-tag">Python &amp; NumPy</div>
+                    <div class="prereq-tag">TensorFlow / Keras</div>
+                    <div class="prereq-tag">CIFAR-10 Dataset</div>
+                    <div class="prereq-tag">Image Tensors (4D)</div>
+                    <div class="prereq-tag">Overfitting Concepts</div>
+                    <div class="prereq-tag">Regularization</div>
+                    <div class="prereq-tag">Matplotlib Visualization</div>
+                    <div class="prereq-tag">GPU Computation</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THEORY -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Theory</h3>
+            </div>
+            <div class="section-box">
+                <p><strong>Data augmentation</strong> is a regularization technique that artificially increases the
+                    effective size and diversity of a training dataset by applying random, label-preserving
+                    transformations to existing samples. In the context of images, these transformations include
+                    geometric operations (flips, rotations, translations, zooms, crops) and photometric operations
+                    (brightness, contrast, hue, saturation shifts). The fundamental insight is that a slightly rotated
+                    or flipped version of a cat image is still a cat &mdash; the semantic label remains unchanged while
+                    the pixel-level representation varies. By exposing the model to these variations during training,
+                    augmentation reduces overfitting, improves generalization to unseen data, and decreases the model's
+                    reliance on memorizing exact training examples.</p>
+
+                <p>Mathematically, augmentation expands the empirical risk minimization objective. Without augmentation,
+                    the training loss is <em>L = (1/N) &Sigma; L(f(x_i), y_i)</em> over N fixed training samples. With
+                    augmentation, each epoch sees a different stochastic transformation T applied to each sample:
+                    <em>L = (1/N) &Sigma; L(f(T(x_i)), y_i)</em>, where T is drawn from a distribution of
+                    transformations. This effectively creates an infinite stream of unique training samples, preventing
+                    the model from memorizing the exact training set and forcing it to learn <strong>invariant
+                        features</strong> &mdash; properties of the input that remain constant under the applied
+                    transformations.
+                </p>
+
+                <!-- Transform Cards -->
+                <div class="transform-grid">
+                    <div class="transform-card">
+                        <div class="transform-icon">&#8693;</div>
+                        <div class="transform-name">RandomFlip</div>
+                        <div class="transform-desc">Mirrors image horizontally, vertically, or both with 50%
+                            probability.</div>
+                        <div class="transform-code">"horizontal_and_vertical"</div>
+                    </div>
+                    <div class="transform-card">
+                        <div class="transform-icon">&#8635;</div>
+                        <div class="transform-name">RandomRotation</div>
+                        <div class="transform-desc">Rotates image by a random angle within a specified fraction of
+                            2&pi;.</div>
+                        <div class="transform-code">0.2 &rarr; &plusmn;72&deg;</div>
+                    </div>
+                    <div class="transform-card">
+                        <div class="transform-icon">&#9974;</div>
+                        <div class="transform-name">RandomZoom</div>
+                        <div class="transform-desc">Randomly zooms in or out, cropping or padding as needed.</div>
+                        <div class="transform-code">0.2 &rarr; &plusmn;20%</div>
+                    </div>
+                    <div class="transform-card">
+                        <div class="transform-icon">&#9680;</div>
+                        <div class="transform-name">RandomContrast</div>
+                        <div class="transform-desc">Randomly adjusts the contrast of the image by a specified factor.
+                        </div>
+                        <div class="transform-code">0.2 &rarr; &plusmn;20%</div>
+                    </div>
+                </div>
+
+                <p><strong>RandomFlip("horizontal_and_vertical")</strong> mirrors the image along the horizontal axis,
+                    vertical axis, or both with 50% probability. Horizontal flips are particularly effective for natural
+                    images since most objects (animals, vehicles, objects) remain semantically identical when mirrored.
+                    <strong>RandomRotation(0.2)</strong> rotates the image by a random angle in the range
+                    [&minus;0.2 &times; 2&pi;, +0.2 &times; 2&pi;] = [&minus;72&deg;, +72&deg;]. The rotation uses
+                    bilinear interpolation to fill newly exposed pixel regions. <strong>RandomZoom(0.2)</strong>
+                    randomly scales the image by a factor in [1&minus;0.2, 1+0.2] = [0.8, 1.2], either zooming in
+                    (cropping) or zooming out (zero-padding). <strong>RandomContrast(0.2)</strong> adjusts the contrast
+                    by a random factor, making the model robust to varying lighting conditions.
+                </p>
+
+                <p>The Keras preprocessing layers approach offers a critical advantage over legacy ImageDataGenerator:
+                    <strong>the augmentation pipeline runs on the GPU as part of the model graph</strong>. In the old
+                    ImageDataGenerator workflow, images were augmented on the CPU using Python/PIL operations, creating
+                    a CPU-to-GPU data transfer bottleneck. With preprocessing layers, transformations execute as
+                    TensorFlow
+                    operations within the GPU compute graph via <code>tf.data</code> or direct model integration. This
+                    means augmentation happens in parallel with forward/backward passes, fully utilizing GPU parallelism
+                    and eliminating I/O bottlenecks. Furthermore, because the augmentation is part of the model, it is
+                    automatically saved and restored with the model weights.
+                </p>
+
+                <p>A crucial detail is the <code>training=True</code> flag when calling augmentation layers. Keras
+                    preprocessing layers have two behaviors: during training (<code>training=True</code>), they apply
+                    random transformations; during inference (<code>training=False</code>), they pass data through
+                    unchanged. When augmentation layers are embedded inside a model, Keras automatically sets this flag
+                    correctly during <code>model.fit()</code> and <code>model.predict()</code>. When calling the
+                    augmentation pipeline directly (as in visualization), you must explicitly pass
+                    <code>training=True</code> to activate randomness.
+                </p>
+            </div>
+        </div>
+
+        <!-- ALGORITHM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Algorithm / Step-by-Step</h3>
+            </div>
+            <div class="section-box">
+                <ol>
+                    <li>Import <code>tensorflow</code>, <code>matplotlib.pyplot</code>, and Keras
+                        <code>layers</code> and <code>datasets</code> modules.
+                    </li>
+                    <li>Load the CIFAR-10 dataset using <code>datasets.cifar10.load_data()</code> and extract only the
+                        training portion (test data is not needed for this demonstration).</li>
+                    <li>Select a single sample image from the training set (e.g., index 4) and display it using
+                        Matplotlib as the reference "Original Image."</li>
+                    <li>Define a <code>tf.keras.Sequential</code> augmentation pipeline containing, in order:
+                        <ul>
+                            <li><code>layers.RandomFlip("horizontal_and_vertical")</code></li>
+                            <li><code>layers.RandomRotation(0.2)</code></li>
+                            <li><code>layers.RandomZoom(0.2)</code></li>
+                            <li><code>layers.RandomContrast(0.2)</code></li>
+                        </ul>
+                    </li>
+                    <li>Add a batch dimension to the sample image using <code>tf.expand_dims(sample_image, 0)</code>,
+                        changing shape from (32, 32, 3) to (1, 32, 32, 3), since preprocessing layers expect 4D input
+                        tensors of shape (batch, height, width, channels).</li>
+                    <li>Set up a 3&times;3 Matplotlib subplot grid (9 panels) and iterate 9 times. On each iteration,
+                        call the augmentation pipeline with <code>training=True</code> and display the result in the
+                        next subplot. Cast the output tensor back to <code>tf.uint8</code> for correct visualization.
+                    </li>
+                    <li>Add a super-title to the figure summarizing the visualization.</li>
+                    <li><strong>Integration note:</strong> In a production model, the augmentation pipeline is placed as
+                        the first layer(s) of the classification model, so augmentation happens automatically during
+                        training and is bypassed during inference.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- CODE CONCEPTS -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Key Code Concepts</h3>
+            </div>
+            <div class="section-box">
+
+                <p class="code-label">Snippet 1 &mdash; Loading CIFAR-10 and Selecting a Sample Image</p>
+                <div class="code-block">
+                    <pre><span class="kw">from</span> tensorflow.keras <span class="kw">import</span> datasets
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+<span class="cm"># Load CIFAR-10 — 60,000 color images, 32×32, 10 classes</span>
+(train_images, train_labels), _ = datasets.cifar10.<span class="fn">load_data</span>()
+
+<span class="cm"># Extract a single sample image</span>
+sample_image = train_images[<span class="num">4</span>]  <span class="cm"># shape: (32, 32, 3)</span>
+
+<span class="cm"># Display original</span>
+plt.<span class="fn">figure</span>(figsize=(<span class="num">3</span>, <span class="num">3</span>))
+plt.<span class="fn">imshow</span>(sample_image)
+plt.<span class="fn">title</span>(<span class="str">"Original Image"</span>)
+plt.<span class="fn">axis</span>(<span class="str">'off'</span>)
+plt.<span class="fn">show</span>()</pre>
+                </div>
+                <p>CIFAR-10 consists of 60,000 32&times;32 RGB images across 10 classes (airplane, automobile, bird,
+                    cat, deer, dog, frog, horse, ship, truck). Each image is a uint8 tensor of shape (32, 32, 3). We
+                    extract a single image at index 4 (typically an automobile or frog) to serve as the seed for
+                    generating augmented variations. The underscore <code>_</code> discards the test split since this
+                    practical focuses purely on augmentation visualization, not model training.</p>
+
+                <p class="code-label">Snippet 2 &mdash; Building the Augmentation Pipeline</p>
+                <div class="code-block">
+                    <pre><span class="kw">from</span> tensorflow.keras <span class="kw">import</span> layers
+
+<span class="cm"># Compose augmentation layers into a Sequential pipeline</span>
+data_augmentation = tf.keras.<span class="cls">Sequential</span>([
+    layers.<span class="cls">RandomFlip</span>(<span class="str">"horizontal_and_vertical"</span>),
+    layers.<span class="cls">RandomRotation</span>(<span class="num">0.2</span>),
+    layers.<span class="cls">RandomZoom</span>(<span class="num">0.2</span>),
+    layers.<span class="cls">RandomContrast</span>(<span class="num">0.2</span>)
+])
+
+<span class="cm"># Each layer applies a random transform with 50% probability</span>
+<span class="cm"># Rotation: 0.2 × 360° = ±72° max rotation</span>
+<span class="cm"># Zoom: ±20% scale factor</span>
+<span class="cm"># Contrast: ±20% contrast adjustment</span></pre>
+                </div>
+                <p>The augmentation pipeline is itself a Keras <code>Sequential</code> model composed entirely of
+                    preprocessing layers. Each layer applies its transformation stochastically during training and acts
+                    as an identity function during inference. The order matters: flipping is applied first, then
+                    rotation, zoom, and contrast. This composition is <strong>differentiable</strong> and executes as
+                    part of the TensorFlow compute graph, enabling GPU acceleration. The parameter 0.2 for rotation
+                    represents a fraction of a full circle (2&pi; radians), equivalent to &plusmn;72 degrees.</p>
+
+                <p class="code-label">Snippet 3 &mdash; Visualizing Augmented Variations</p>
+                <div class="code-block">
+                    <pre><span class="cm"># Add batch dimension: (32, 32, 3) → (1, 32, 32, 3)</span>
+image_batch = tf.<span class="fn">expand_dims</span>(sample_image, <span class="num">0</span>)
+
+<span class="cm"># Generate and display 9 augmented variants</span>
+plt.<span class="fn">figure</span>(figsize=(<span class="num">10</span>, <span class="num">10</span>))
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">9</span>):
+    augmented = data_augmentation(image_batch, training=<span class="str">True</span>)
+    plt.<span class="fn">subplot</span>(<span class="num">3</span>, <span class="num">3</span>, i + <span class="num">1</span>)
+    plt.<span class="fn">imshow</span>(tf.<span class="fn">cast</span>(augmented[<span class="num">0</span>], tf.uint8))
+    plt.<span class="fn">axis</span>(<span class="str">"off"</span>)
+plt.<span class="fn">tight_layout</span>()
+plt.<span class="fn">suptitle</span>(<span class="str">"Augmented Variations"</span>, y=<span class="num">1.02</span>, fontsize=<span class="num">16</span>)
+plt.<span class="fn">show</span>()</pre>
+                </div>
+                <p>Preprocessing layers expect a 4D input tensor of shape <code>(batch_size, height, width,
+                        channels)</code>. The <code>tf.expand_dims()</code> operation inserts a new dimension at axis
+                    0,
+                    converting a single image into a batch of one. Inside the loop, <code>training=True</code> is
+                    essential &mdash; without it, the layers would skip randomization and return the original image
+                    unchanged. Each iteration generates a <em>different</em> random transformation because the random
+                    seeds are re-sampled each call. The output of preprocessing layers is float32, so
+                    <code>tf.cast(..., tf.uint8)</code> converts back to the original data type for proper color
+                    rendering in Matplotlib.
+                </p>
+
+                <p class="code-label">Snippet 4 &mdash; Model Integration</p>
+                <div class="code-block">
+                    <pre><span class="cm"># Augmentation is the FIRST layer of the model</span>
+model = tf.keras.<span class="cls">Sequential</span>([
+    data_augmentation,                 <span class="cm"># ← runs on GPU during training</span>
+    layers.<span class="cls">Conv2D</span>(<span class="num">32</span>, <span class="num">3</span>, padding=<span class="str">'same'</span>, activation=<span class="str">'relu'</span>),
+    layers.<span class="cls">MaxPooling2D</span>(),
+    layers.<span class="cls">Conv2D</span>(<span class="num">64</span>, <span class="num">3</span>, padding=<span class="str">'same'</span>, activation=<span class="str">'relu'</span>),
+    layers.<span class="cls">MaxPooling2D</span>(),
+    layers.<span class="cls">Flatten</span>(),
+    layers.<span class="cls">Dense</span>(<span class="num">10</span>, activation=<span class="str">'softmax'</span>)
+])</pre>
+                </div>
+                <p>Embedding the augmentation pipeline as the first layer(s) of the model is the recommended production
+                    pattern. When <code>model.fit()</code> is called, Keras automatically passes
+                    <code>training=True</code> to the augmentation layers, activating random transforms. When
+                    <code>model.predict()</code> or <code>model.evaluate()</code> is called, Keras passes
+                    <code>training=False</code>, disabling augmentation for consistent inference. This tight
+                    integration means the augmentation logic travels with the model &mdash; saving the model with
+                    <code>model.save()</code> preserves the entire preprocessing pipeline, and loading it with
+                    <code>tf.keras.models.load_model()</code> restores augmentation behavior without any additional
+                    code.
+                </p>
+
+            </div>
+        </div>
+
+        <!-- EXPECTED OUTPUT -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Expected Output</h3>
+            </div>
+            <div class="section-box">
+                <p><strong>Original Image Plot:</strong> A single 3&times;3 inch figure displaying one CIFAR-10 image
+                    (32&times;32 RGB). The image should be clearly recognizable (e.g., a red automobile or a green frog)
+                    with axis labels hidden. This establishes the baseline for comparison.</p>
+
+                <p><strong>Augmentation Pipeline Confirmation:</strong> Console prints
+                    <code>"Data augmentation pipeline ready."</code> confirming successful instantiation of the
+                    <code>tf.keras.Sequential</code> containing the four preprocessing layers.
+                </p>
+
+                <p><strong>Augmented 3&times;3 Grid:</strong> A 10&times;10 inch figure containing 9 subplot panels
+                    arranged in a 3&times;3 grid, each showing a unique augmented version of the original image.
+                    Because transformations are stochastic, every panel will differ:</p>
+                <ul>
+                    <li>Some images will be horizontally flipped, others vertically, some unchanged.</li>
+                    <li>Rotation angles will vary between &minus;72&deg; and +72&deg;, with black triangular regions
+                        visible in corners where rotation exposes empty space.</li>
+                    <li>Zoom levels will vary: zoomed-in images show cropped portions at larger scale; zoomed-out
+                        images have a centered image surrounded by black/zero-padding borders.</li>
+                    <li>Contrast will vary subtly: some images appear slightly washed out, others more vivid.</li>
+                </ul>
+                <p>The super-title "Augmented Variations of the Original Image" appears above the grid. Despite all
+                    transformations, the semantic content of the image (the object class) remains identifiable in every
+                    panel &mdash; this is the key property that makes augmentation a valid regularization strategy.</p>
+            </div>
+        </div>
+
+        <!-- VIVA -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Viva Questions &amp; Answers</h3>
+            </div>
+            <div class="section-box">
+
+                <div class="viva-item">
+                    <div class="viva-q">Q1. Why is data augmentation considered a regularization technique?</div>
+                    <div class="viva-a">Data augmentation is a form of regularization because it reduces overfitting by
+                        artificially expanding the effective training set and preventing the model from memorizing exact
+                        training examples. By applying random, label-preserving transformations, augmentation forces the
+                        model to learn invariant features &mdash; properties that remain constant regardless of
+                        orientation, scale, or lighting. This is conceptually similar to dropout or L2 regularization,
+                        all of which constrain the model to learn more generalizable representations rather than
+                        fitting noise in the training data.</div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q2. What is the difference between Keras preprocessing layers and the legacy
+                        ImageDataGenerator?</div>
+                    <div class="viva-a">There are three key differences: (1) <strong>Execution location</strong> &mdash;
+                        preprocessing layers run on the GPU as part of the TensorFlow compute graph, while
+                        ImageDataGenerator runs on the CPU using Python/PIL, creating a CPU-to-GPU data transfer
+                        bottleneck. (2) <strong>Model integration</strong> &mdash; preprocessing layers can be embedded
+                        directly inside a Keras model (they are just layers), so augmentation is saved/restored with
+                        the model. ImageDataGenerator is external to the model and must be managed separately. (3)
+                        <strong>API consistency</strong> &mdash; preprocessing layers use the standard Keras layer API
+                        (fit, predict, save), whereas ImageDataGenerator requires a separate flow/from_directory API
+                        that is less flexible and harder to compose with modern <code>tf.data</code> pipelines.
+                    </div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q3. Why must we pass training=True when calling the augmentation pipeline
+                        directly?</div>
+                    <div class="viva-a">Keras preprocessing layers are designed to behave differently during training
+                        and inference. During training (<code>training=True</code>), layers like RandomFlip,
+                        RandomRotation, and RandomZoom apply their stochastic transformations. During inference
+                        (<code>training=False</code>), they act as identity functions and pass data through unchanged.
+                        When augmentation layers are embedded in a model, Keras automatically manages this flag based
+                        on whether <code>model.fit()</code> or <code>model.predict()</code> is called. However, when
+                        calling the augmentation pipeline standalone (as in visualization code), you must explicitly
+                        set <code>training=True</code> to activate the random behavior &mdash; otherwise, the original
+                        image is returned unchanged 9 times.</div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q4. Why do we add a batch dimension with tf.expand_dims before passing the
+                        image to the augmentation pipeline?</div>
+                    <div class="viva-a">All Keras layers, including preprocessing layers, expect input tensors with a
+                        batch dimension. A single CIFAR-10 image has shape (32, 32, 3) representing (height, width,
+                        channels). Preprocessing layers expect (batch_size, height, width, channels), i.e., a 4D
+                        tensor. <code>tf.expand_dims(sample_image, 0)</code> inserts a dimension of size 1 at axis 0,
+                        converting the shape to (1, 32, 32, 3) &mdash; a batch containing a single image. Without this,
+                        the layer would raise a shape mismatch error.</div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q5. What would happen if you applied augmentation to the test/validation set?
+                    </div>
+                    <div class="viva-a">Applying random augmentation to test or validation data would make evaluation
+                        non-deterministic and incomparable across runs. Since the transformations are stochastic, the
+                        same test image could yield different predictions on each evaluation, making it impossible to
+                        reliably measure model performance or compare hyperparameter settings. The test set must reflect
+                        the true, original distribution that the model will encounter in production. Augmentation is
+                        exclusively a <strong>training-time</strong> technique. During inference, preprocessing layers
+                        automatically disable randomness when <code>training=False</code>.</div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>NIELIT Ropar &middot; M.Tech AI &middot; Deep Learning Techniques <span>DOAI250006</span> &middot; Practical
+            06</p>
+    </footer>
+</body>
+
+</html>

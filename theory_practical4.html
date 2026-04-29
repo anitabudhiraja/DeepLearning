@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P04 — Image Classification using CNN | NIELIT Ropar</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --card: #16161f;
+            --border: #2a2a3a;
+            --accent: #00e5ff;
+            --accent2: #7c3aed;
+            --accent3: #f59e0b;
+            --text: #e8e8f0;
+            --muted: #7070a0;
+            --font-display: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-display);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(16px);
+        }
+
+        .logo-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .header-text h1 {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .header-text p {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            margin-left: auto;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 5px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 3rem 2rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pnum {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero h2 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h2 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .colab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(124, 58, 237, 0.15));
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .colab-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 58, 237, 0.25));
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .colab-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title h3 {
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border), transparent);
+        }
+
+        .section-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            opacity: 0.6;
+        }
+
+        p {
+            color: #c0c0d8;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        ol,
+        ul {
+            color: #c0c0d8;
+            padding-left: 1.5rem;
+            line-height: 1.8;
+        }
+
+        ol li,
+        ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #0d0d14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.7;
+            color: #c8e6ff;
+        }
+
+        .code-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Syntax highlighting */
+        .kw {
+            color: #c792ea;
+        }
+
+        .fn {
+            color: #82aaff;
+        }
+
+        .str {
+            color: #c3e88d;
+        }
+
+        .cm {
+            color: #546e7a;
+            font-style: italic;
+        }
+
+        .num {
+            color: #f78c6c;
+        }
+
+        .cls {
+            color: #ffcb6b;
+        }
+
+        .viva-item {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 0;
+        }
+
+        .viva-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .viva-q {
+            font-weight: 700;
+            color: var(--accent3);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .viva-a {
+            color: #c0c0d8;
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        .prereq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .prereq-tag {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+            color: #a78bfa;
+        }
+
+        /* CNN Architecture diagram */
+        .arch-diagram {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin: 1.25rem 0;
+            padding: 1.25rem;
+            background: #0d0d14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            justify-content: center;
+        }
+
+        .arch-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .arch-box {
+            padding: 0.5rem 0.7rem;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .arch-box.input {
+            background: rgba(0, 229, 255, 0.12);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            color: var(--accent);
+        }
+
+        .arch-box.conv {
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(124, 58, 237, 0.5);
+            color: #a78bfa;
+        }
+
+        .arch-box.pool {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: var(--accent3);
+        }
+
+        .arch-box.dense {
+            background: rgba(130, 170, 255, 0.12);
+            border: 1px solid rgba(130, 170, 255, 0.4);
+            color: #82aaff;
+        }
+
+        .arch-box.output {
+            background: rgba(195, 232, 141, 0.1);
+            border: 1px solid rgba(195, 232, 141, 0.35);
+            color: #c3e88d;
+        }
+
+        .arch-label {
+            font-family: var(--font-mono);
+            font-size: 0.5rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .arch-arrow {
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1;
+            align-self: center;
+            margin-bottom: 1rem;
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--muted);
+        }
+
+        footer span {
+            color: var(--accent);
+        }
+
+        @media(max-width:600px) {
+
+            .hero,
+            .content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .back-link span {
+                display: none;
+            }
+
+            .arch-diagram {
+                gap: 0.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" /></div>
+        <div class="header-text">
+            <h1>NIELIT Ropar</h1>
+            <p>Deep Learning Techniques · DOAI250006</p>
+        </div>
+        <a href="index.html" class="back-link">← Back</a>
+    </header>
+
+    <section class="hero">
+        <p class="pnum">// Practical — 04</p>
+        <h2>Image Classification using<br /><span>CNN with 2 Convolutional Layers on MNIST</span></h2>
+        <a href="https://colab.research.google.com/drive/1VDoQqDGIL0CYTsO9HORG56CLNbA6fyUF?usp=sharing" target="_blank"
+            class="colab-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+            </svg>
+            Open in Colab
+        </a>
+    </section>
+
+    <div class="content">
+
+        <!-- AIM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Aim</h3>
+            </div>
+            <div class="section-box">
+                <p>To design, train, and evaluate a Convolutional Neural Network (CNN) with exactly two convolutional
+                    layers for classifying handwritten digit images from the MNIST dataset, achieving high test accuracy
+                    by exploiting spatial hierarchies in image data.</p>
+            </div>
+        </div>
+
+        <!-- PREREQUISITES -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Prerequisites</h3>
+            </div>
+            <div class="section-box">
+                <div class="prereq-grid">
+                    <div class="prereq-tag">Python & NumPy</div>
+                    <div class="prereq-tag">TensorFlow / Keras API</div>
+                    <div class="prereq-tag">Neural Network Basics</div>
+                    <div class="prereq-tag">Convolution Operation</div>
+                    <div class="prereq-tag">Activation Functions</div>
+                    <div class="prereq-tag">Pooling Layers</div>
+                    <div class="prereq-tag">Backpropagation</div>
+                    <div class="prereq-tag">Softmax & Cross-Entropy</div>
+                    <div class="prereq-tag">MNIST Dataset</div>
+                    <div class="prereq-tag">Matplotlib Visualization</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THEORY -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Theory</h3>
+            </div>
+            <div class="section-box">
+                <p>A <strong>Convolutional Neural Network (CNN)</strong> is a specialized deep learning architecture
+                    designed to process data with a grid-like topology, such as images. Unlike fully connected networks
+                    that flatten the input and lose spatial relationships, CNNs preserve the 2D structure by applying
+                    learnable filters (kernels) across the input. Each filter slides over the image and computes a
+                    dot-product with local patches, producing a <strong>feature map</strong> that encodes the presence
+                    of a particular feature (e.g., an edge, curve, or texture) at each spatial location. This
+                    operation is the <strong>convolution</strong>, defined as:
+                    <em>S(i, j) = (I * K)(i, j) = ΣΣ I(i+m, j+n) · K(m, n)</em>, where I is the input and K is the
+                    kernel.
+                </p>
+
+                <p>The key advantage of CNNs is <strong>parameter sharing</strong>: the same filter weights are reused
+                    across all spatial positions, drastically reducing the number of parameters compared to a dense
+                    layer. A dense layer on a 28×28 image with 32 units would require 28×28×32 = 25,088 weights, whereas
+                    a 3×3 convolutional filter needs only 9 weights regardless of image size. This also grants
+                    <strong>translation equivariance</strong> — if a feature (like a digit stroke) shifts in the image,
+                    the activation shifts correspondingly in the feature map, allowing the network to detect patterns
+                    regardless of their position.
+                </p>
+
+                <p>After each convolutional layer, a <strong>Max Pooling</strong> operation is typically applied.
+                    MaxPooling2D with a (2,2) window reduces each feature map's spatial dimensions by half by selecting
+                    the maximum activation in each 2×2 patch. This introduces <strong>spatial invariance</strong>
+                    (small translations don't change the pooled output), reduces computational load for subsequent
+                    layers, and helps control overfitting. After stacking two Conv+Pool blocks, the feature maps are
+                    <strong>flattened</strong> into a 1D vector and passed to Dense (fully connected) layers that
+                    perform the final classification.
+                </p>
+
+                <p>The output layer uses a <strong>Softmax activation</strong> with 10 neurons (one per digit class
+                    0–9). Softmax converts raw logits into a probability distribution:
+                    <em>σ(z)_i = e^(z_i) / Σ_j e^(z_j)</em>, where the class with the highest probability is chosen
+                    as the prediction. Training minimizes <strong>Sparse Categorical Cross-Entropy</strong> loss
+                    (suitable when labels are integers rather than one-hot encoded):
+                    <em>L = −log(p_y)</em>, where p_y is the predicted probability for the true class y. The
+                    <strong>Adam optimizer</strong> is used for adaptive learning rate optimization, combining momentum
+                    and RMSprop-style gradient scaling for faster, more stable convergence.
+                </p>
+
+                <p>For MNIST, each image is 28×28 grayscale. After the first Conv2D(32 filters, 3×3) layer, the
+                    output shape is (26, 26, 32). After MaxPooling2D(2,2), it becomes (13, 13, 32). The second
+                    Conv2D(64 filters, 3×3) yields (11, 11, 64), and after another MaxPooling it becomes (5, 5, 64).
+                    Flattening gives a vector of 5×5×64 = 1,600 values, which feeds into the Dense layers.
+                    This hierarchical feature extraction — from edges in layer 1 to curves and shapes in layer 2 —
+                    allows CNNs to achieve near-human accuracy on digit recognition.</p>
+
+                <!-- Architecture Diagram -->
+                <div class="arch-diagram">
+                    <div class="arch-block">
+                        <div class="arch-box input">Input<br />28×28×1</div>
+                        <div class="arch-label">MNIST Image</div>
+                    </div>
+                    <div class="arch-arrow">→</div>
+                    <div class="arch-block">
+                        <div class="arch-box conv">Conv2D<br />32 filters<br />3×3, ReLU</div>
+                        <div class="arch-label">26×26×32</div>
+                    </div>
+                    <div class="arch-arrow">→</div>
+                    <div class="arch-block">
+                        <div class="arch-box pool">MaxPool<br />2×2</div>
+                        <div class="arch-label">13×13×32</div>
+                    </div>
+                    <div class="arch-arrow">→</div>
+                    <div class="arch-block">
+                        <div class="arch-box conv">Conv2D<br />64 filters<br />3×3, ReLU</div>
+                        <div class="arch-label">11×11×64</div>
+                    </div>
+                    <div class="arch-arrow">→</div>
+                    <div class="arch-block">
+                        <div class="arch-box pool">MaxPool<br />2×2</div>
+                        <div class="arch-label">5×5×64</div>
+                    </div>
+                    <div class="arch-arrow">→</div>
+                    <div class="arch-block">
+                        <div class="arch-box dense">Flatten<br />→ Dense 64<br />ReLU</div>
+                        <div class="arch-label">1600 → 64</div>
+                    </div>
+                    <div class="arch-arrow">→</div>
+                    <div class="arch-block">
+                        <div class="arch-box output">Dense 10<br />Softmax</div>
+                        <div class="arch-label">Output Probs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ALGORITHM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Algorithm / Step-by-Step</h3>
+            </div>
+            <div class="section-box">
+                <ol>
+                    <li>Import <code>tensorflow</code>, <code>keras</code> datasets, layers, models, and
+                        <code>matplotlib.pyplot</code>.
+                    </li>
+                    <li>Load the MNIST dataset using <code>datasets.mnist.load_data()</code>, which returns
+                        <code>(train_images, train_labels)</code> and <code>(test_images, test_labels)</code>.
+                    </li>
+                    <li>Normalize pixel values from [0, 255] to [0.0, 1.0] by dividing by 255.0.</li>
+                    <li>Expand dimensions to add the channel axis: reshape from (N, 28, 28) to
+                        <code>(N, 28, 28, 1)</code> since Conv2D expects a channel dimension. (For CIFAR-10 this is
+                        already (N, 32, 32, 3).)
+                    </li>
+                    <li>Build a Sequential model:
+                        <ul>
+                            <li>Conv2D(32, (3,3), activation='relu', input_shape=(28,28,1))</li>
+                            <li>MaxPooling2D(2,2)</li>
+                            <li>Conv2D(64, (3,3), activation='relu')</li>
+                            <li>MaxPooling2D(2,2)</li>
+                            <li>Flatten()</li>
+                            <li>Dense(64, activation='relu')</li>
+                            <li>Dense(10, activation='softmax')</li>
+                        </ul>
+                    </li>
+                    <li>Call <code>model.summary()</code> to inspect layer shapes and parameter counts.</li>
+                    <li>Compile the model with optimizer='adam', loss='sparse_categorical_crossentropy',
+                        metrics=['accuracy'].</li>
+                    <li>Train the model using <code>model.fit()</code> for 10 epochs with validation data.</li>
+                    <li>Plot training and validation accuracy vs. epoch using Matplotlib.</li>
+                    <li>Evaluate on the test set using <code>model.evaluate()</code> and print final test accuracy.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- CODE CONCEPTS -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Key Code Concepts</h3>
+            </div>
+            <div class="section-box">
+
+                <p class="code-label">Snippet 1 — Data Loading and Preprocessing</p>
+                <div class="code-block">
+                    <pre><span class="kw">from</span> tensorflow.keras <span class="kw">import</span> datasets
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># Load MNIST — returns numpy arrays</span>
+(train_images, train_labels), (test_images, test_labels) = datasets.mnist.<span class="fn">load_data</span>()
+
+<span class="cm"># Normalize to [0, 1] — critical for gradient stability</span>
+train_images = train_images / <span class="num">255.0</span>
+test_images  = test_images  / <span class="num">255.0</span>
+
+<span class="cm"># Add channel dimension: (60000,28,28) → (60000,28,28,1)</span>
+train_images = train_images[..., np.<span class="fn">newaxis</span>]
+test_images  = test_images[..., np.<span class="fn">newaxis</span>]
+
+<span class="fn">print</span>(train_images.shape)  <span class="cm"># (60000, 28, 28, 1)</span></pre>
+                </div>
+                <p>The <strong>ellipsis (…)</strong> syntax selects all existing dimensions, and
+                    <code>np.newaxis</code> appends the channel dimension (depth=1 for grayscale). Conv2D requires
+                    input shape <code>(height, width, channels)</code>, so this reshape is essential for MNIST. CIFAR-10
+                    images already carry 3 channels and need no such reshaping.
+                </p>
+
+                <p class="code-label">Snippet 2 — Building the CNN Architecture</p>
+                <div class="code-block">
+                    <pre><span class="kw">from</span> tensorflow.keras <span class="kw">import</span> layers, models
+
+model = models.<span class="cls">Sequential</span>([
+    <span class="cm"># ── Block 1: First Convolutional Layer ──</span>
+    layers.<span class="cls">Conv2D</span>(<span class="num">32</span>, (<span class="num">3</span>, <span class="num">3</span>), activation=<span class="str">'relu'</span>,
+                   input_shape=(<span class="num">28</span>, <span class="num">28</span>, <span class="num">1</span>)),
+    layers.<span class="cls">MaxPooling2D</span>((<span class="num">2</span>, <span class="num">2</span>)),
+
+    <span class="cm"># ── Block 2: Second Convolutional Layer ──</span>
+    layers.<span class="cls">Conv2D</span>(<span class="num">64</span>, (<span class="num">3</span>, <span class="num">3</span>), activation=<span class="str">'relu'</span>),
+    layers.<span class="cls">MaxPooling2D</span>((<span class="num">2</span>, <span class="num">2</span>)),
+
+    <span class="cm"># ── Classifier Head ──</span>
+    layers.<span class="cls">Flatten</span>(),
+    layers.<span class="cls">Dense</span>(<span class="num">64</span>, activation=<span class="str">'relu'</span>),
+    layers.<span class="cls">Dense</span>(<span class="num">10</span>, activation=<span class="str">'softmax'</span>)
+])
+
+model.<span class="fn">summary</span>()</pre>
+                </div>
+                <p>The doubling of filters from 32 → 64 across the two convolutional blocks is a standard design
+                    heuristic: deeper layers capture more complex, abstract features and benefit from a larger filter
+                    bank. <strong>ReLU activation</strong> (<em>f(x) = max(0, x)</em>) introduces non-linearity after
+                    each convolution while avoiding the vanishing gradient problem. The final <strong>Dense(10,
+                        softmax)</strong> layer outputs a probability vector over the 10 digit classes.</p>
+
+                <p class="code-label">Snippet 3 — Training and Evaluating the Model</p>
+                <div class="code-block">
+                    <pre><span class="cm"># Compile: optimizer, loss function, and metric</span>
+model.<span class="fn">compile</span>(
+    optimizer=<span class="str">'adam'</span>,
+    loss=<span class="str">'sparse_categorical_crossentropy'</span>,
+    metrics=[<span class="str">'accuracy'</span>]
+)
+
+<span class="cm"># Train for 10 epochs, monitoring validation accuracy</span>
+history = model.<span class="fn">fit</span>(
+    train_images, train_labels,
+    epochs=<span class="num">10</span>,
+    validation_data=(test_images, test_labels)
+)
+
+<span class="cm"># Evaluate on unseen test set</span>
+test_loss, test_acc = model.<span class="fn">evaluate</span>(test_images, test_labels, verbose=<span class="num">2</span>)
+<span class="fn">print</span>(<span class="str">f'\nTest Accuracy: {test_acc:.4f}'</span>)
+
+<span class="cm"># Visualize learning curves</span>
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+plt.<span class="fn">plot</span>(history.history[<span class="str">'accuracy'</span>],     label=<span class="str">'Train Acc'</span>)
+plt.<span class="fn">plot</span>(history.history[<span class="str">'val_accuracy'</span>], label=<span class="str">'Val Acc'</span>)
+plt.<span class="fn">xlabel</span>(<span class="str">'Epoch'</span>); plt.<span class="fn">ylabel</span>(<span class="str">'Accuracy'</span>)
+plt.<span class="fn">legend</span>(); plt.<span class="fn">show</span>()</pre>
+                </div>
+                <p><strong>Sparse Categorical Cross-Entropy</strong> is used because labels are integer class indices
+                    (0–9), not one-hot vectors — it internally converts the integer to the corresponding probability
+                    index. The <code>history</code> object records per-epoch metrics, enabling post-training analysis of
+                    overfitting (gap between train and val accuracy) or underfitting (both low).</p>
+            </div>
+        </div>
+
+        <!-- EXPECTED OUTPUT -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Expected Output</h3>
+            </div>
+            <div class="section-box">
+                <p><strong>model.summary():</strong> Displays 7 layers — 2 Conv2D, 2 MaxPooling2D, 1 Flatten, and 2
+                    Dense — with a total of approximately <strong>93,322 trainable parameters</strong>. The output shape
+                    progression confirms the spatial downsampling from 28×28 → 13×13 → 5×5 after the two pooling
+                    layers.</p>
+                <p><strong>Training log (10 epochs):</strong> Training accuracy begins around 90% at epoch 1 and
+                    steadily climbs, reaching approximately <strong>99%+ training accuracy</strong> by epoch 10.
+                    Validation accuracy tracks closely (indicating low overfitting), typically settling between
+                    <strong>99.0%–99.4%</strong> on MNIST.
+                </p>
+                <p><strong>Accuracy plot:</strong> Both training and validation accuracy curves rise steeply in the
+                    first 3–4 epochs and then plateau, with a small gap between them. The curves should be smooth and
+                    converging — a widening gap would indicate overfitting.</p>
+                <p><strong>Test Evaluation:</strong> Console prints test loss (typically ~0.03–0.05) and
+                    <code>Test Accuracy: 0.99xx</code>, confirming excellent generalization. This far exceeds what a
+                    simple Dense network achieves (~97–98%) on the same data, demonstrating the power of spatial
+                    feature extraction via convolutions.
+                </p>
+            </div>
+        </div>
+
+        <!-- VIVA -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Viva Questions & Answers</h3>
+            </div>
+            <div class="section-box">
+
+                <div class="viva-item">
+                    <div class="viva-q">Q1. What is the mathematical operation performed by a Conv2D layer?</div>
+                    <div class="viva-a">A Conv2D layer performs a discrete 2D cross-correlation (commonly called
+                        convolution) between the input feature map and a learnable kernel. For each position (i, j)
+                        in the output, the operation computes S(i, j) = ΣΣ I(i+m, j+n) · K(m, n), where I is the
+                        input and K is the kernel. The kernel slides across the entire input with a stride (default=1),
+                        computing a dot product at each position. Multiple kernels produce multiple feature maps (one
+                        per filter), collectively called the output volume.</div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q2. Why does the first Conv2D layer use 32 filters and the second uses 64?</div>
+                    <div class="viva-a">This is a standard deep learning design principle: deeper layers learn more
+                        abstract, compositional features and typically need more filters to represent the increased
+                        diversity of patterns. The first layer detects low-level features like edges and gradients (a
+                        relatively small vocabulary), while the second layer combines these into curves, corners, and
+                        digit-parts (a richer vocabulary). Doubling filters is a common heuristic that balances
+                        representational capacity with computational cost.</div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q3. What does MaxPooling2D(2,2) do and why is it used?</div>
+                    <div class="viva-a">MaxPooling2D(2,2) partitions each feature map into non-overlapping 2×2 windows
+                        and takes the maximum value from each window, reducing spatial dimensions by a factor of 2 in
+                        each direction (e.g., 26×26 → 13×13). It serves three purposes: (1) reduces the number of
+                        parameters and computation in subsequent layers, (2) provides a degree of translation invariance
+                        — small positional shifts in the input produce the same pooled output, and (3) acts as a form
+                        of regularization by discarding non-maximum activations.</div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q4. Why is 'sparse_categorical_crossentropy' used instead of
+                        'categorical_crossentropy'?</div>
+                    <div class="viva-a">Both compute the same cross-entropy loss, but they differ in expected label
+                        format. <strong>sparse_categorical_crossentropy</strong> accepts integer class labels
+                        (e.g., 0, 3, 7) and internally converts them to one-hot vectors during computation.
+                        <strong>categorical_crossentropy</strong> requires labels to already be one-hot encoded
+                        (e.g., [0,0,0,1,0,0,0,0,0,0]). Since keras.datasets.mnist returns integer labels of shape
+                        (N,), using sparse_categorical_crossentropy avoids the extra one-hot encoding step and is
+                        slightly more memory-efficient.
+                    </div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q5. How would you modify this CNN to work on CIFAR-10 instead of MNIST?</div>
+                    <div class="viva-a">Three changes are needed: (1) Change the data source:
+                        <code>datasets.cifar10.load_data()</code> — CIFAR-10 images are 32×32×3 (RGB) so no channel
+                        expand step is required. (2) Update the <code>input_shape</code> in the first Conv2D layer to
+                        <code>(32, 32, 3)</code>. (3) Keep the output Dense(10, softmax) unchanged since CIFAR-10 also
+                        has 10 classes. However, CIFAR-10 is a harder task (natural images, not digits), so you would
+                        typically see lower accuracy (~70–75%) with this simple 2-layer CNN, and would benefit from
+                        more conv layers, Dropout, or Batch Normalization.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>NIELIT Ropar · M.Tech AI · Deep Learning Techniques <span>DOAI250006</span> · Practical 04</p>
+    </footer>
+</body>
+
+</html>

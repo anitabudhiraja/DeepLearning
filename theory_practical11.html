@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P11 — CPU vs GPU Performance | NIELIT Ropar</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --card: #16161f;
+            --border: #2a2a3a;
+            --accent: #00e5ff;
+            --accent2: #7c3aed;
+            --accent3: #f59e0b;
+            --text: #e8e8f0;
+            --muted: #7070a0;
+            --font-display: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-display);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(16px);
+        }
+
+        .logo-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .header-text h1 {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .header-text p {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            margin-left: auto;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 5px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 3rem 2rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pnum {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero h2 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h2 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .colab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(124, 58, 237, 0.15));
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .colab-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 58, 237, 0.25));
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .colab-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title h3 {
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border), transparent);
+        }
+
+        .section-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            opacity: 0.6;
+        }
+
+        p {
+            color: #c0c0d8;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        ol,
+        ul {
+            color: #c0c0d8;
+            padding-left: 1.5rem;
+            line-height: 1.8;
+        }
+
+        ol li,
+        ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #0d0d14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.7;
+            color: #c8e6ff;
+        }
+
+        .code-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .kw {
+            color: #c792ea;
+        }
+
+        .fn {
+            color: #82aaff;
+        }
+
+        .str {
+            color: #c3e88d;
+        }
+
+        .cm {
+            color: #546e7a;
+            font-style: italic;
+        }
+
+        .num {
+            color: #f78c6c;
+        }
+
+        .cls {
+            color: #ffcb6b;
+        }
+
+        .viva-item {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 0;
+        }
+
+        .viva-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .viva-q {
+            font-weight: 700;
+            color: var(--accent3);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .viva-a {
+            color: #c0c0d8;
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        .prereq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .prereq-tag {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+            color: #a78bfa;
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--muted);
+        }
+
+        footer span {
+            color: var(--accent);
+        }
+
+        @media(max-width:600px) {
+
+            .hero,
+            .content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .back-link span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" onerror="this.style.display='none'"></div>
+        <div class="header-text">
+            <h1>NIELIT Ropar</h1>
+            <p>Deep Learning Techniques · DOAI250006</p>
+        </div>
+        <a href="index.html" class="back-link">← Back</a>
+    </header>
+
+    <section class="hero">
+        <p class="pnum">// Practical — 11</p>
+        <h2>Deep CNN for Multiclass Image Classification<br /><span>and CPU vs GPU Comparison</span></h2>
+        <a href="https://colab.research.google.com/drive/1OktMIPrsFNaRGMaqRcmJRCtWiTYCS4bS?usp=sharing" target="_blank"
+            class="colab-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+            </svg>
+            Open in Colab
+        </a>
+    </section>
+
+    <div class="content">
+        <!-- AIM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Aim</h3>
+            </div>
+            <div class="section-box">
+                <p>To construct a deep Convolutional Neural Network (CNN) for multiclass image classification on the
+                    CIFAR-10 dataset, and to quantitatively demonstrate the training performance (speed) difference
+                    between a Central Processing Unit (CPU) and a Graphics Processing Unit (GPU).</p>
+            </div>
+        </div>
+
+        <!-- PREREQUISITES -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Prerequisites</h3>
+            </div>
+            <div class="section-box">
+                <div class="prereq-grid">
+                    <div class="prereq-tag">Python Programming</div>
+                    <div class="prereq-tag">TensorFlow / Keras</div>
+                    <div class="prereq-tag">CNN Architectures</div>
+                    <div class="prereq-tag">Hardware Acceleration</div>
+                    <div class="prereq-tag">Multiclass Classification</div>
+                    <div class="prereq-tag">CIFAR-10 Dataset</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THEORY -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Theory</h3>
+            </div>
+            <div class="section-box">
+                <p>Training deep Convolutional Neural Networks (CNNs) is a highly computationally intensive task. It
+                    involves performing millions of matrix multiplications, convolutions, and gradient updates across
+                    thousands of epochs. While modern <strong>Central Processing Units (CPUs)</strong> are incredibly
+                    fast, they typically have a small number of powerful cores (e.g., 8 to 24 cores) optimized for
+                    sequential serial processing and complex branching logic.</p>
+                <p>In contrast, <strong>Graphics Processing Units (GPUs)</strong> feature thousands of smaller,
+                    specialized cores designed explicitly for parallel processing. Because neural network operations
+                    (like matrix dot products) are highly parallelizable, GPUs can perform thousands of these
+                    calculations simultaneously. This architectural difference makes GPUs orders of magnitude faster for
+                    Deep Learning workloads.</p>
+                <p>TensorFlow automatically detects available GPUs and defaults to using them. However, for benchmarking
+                    purposes, developers can explicitly assign operations to specific hardware using the
+                    <code>tf.device()</code> context manager. By running the exact same model, data, and training loop
+                    on both <code>'/CPU:0'</code> and <code>'/GPU:0'</code>, we can calculate a precise speedup
+                    multiplier.</p>
+                <p>The CNN architecture utilized in this practical incorporates advanced components to accelerate
+                    convergence and prevent overfitting: <strong>Batch Normalization</strong>, which normalizes the
+                    activations of the previous layer at each batch, and <strong>Dropout</strong>, which randomly
+                    deactivates a fraction of neurons during training.</p>
+            </div>
+        </div>
+
+        <!-- ALGORITHM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Algorithm / Step-by-Step</h3>
+            </div>
+            <div class="section-box">
+                <ol>
+                    <li>Import <code>tensorflow</code>, <code>time</code>, and <code>matplotlib.pyplot</code>.</li>
+                    <li>Verify the presence of a GPU using <code>tf.config.list_physical_devices('GPU')</code>.</li>
+                    <li>Load the CIFAR-10 dataset and normalize the pixel values of both training and testing images to
+                        the [0, 1] range.</li>
+                    <li>Define a modular function <code>build_deep_cnn()</code> that returns a freshly compiled CNN
+                        model. This ensures both hardware tests start with an identical, untrained architecture.</li>
+                    <li>Initialize the model to contain blocks of <code>Conv2D</code>, <code>BatchNormalization</code>,
+                        <code>MaxPooling2D</code>, and <code>Dropout</code> layers, followed by a <code>Flatten</code>
+                        and Dense classification head.</li>
+                    <li><strong>CPU Training:</strong> Wrap the model initialization and the <code>model.fit()</code>
+                        function inside a <code>with tf.device('/CPU:0'):</code> context. Use the <code>time</code>
+                        module to record the start and end times.</li>
+                    <li><strong>GPU Training:</strong> Wrap the model initialization and the <code>model.fit()</code>
+                        function inside a <code>with tf.device('/GPU:0'):</code> context. Record the start and end
+                        times.</li>
+                    <li>Calculate the hardware speedup by dividing the elapsed CPU time by the elapsed GPU time.</li>
+                    <li>Generate a visual bar chart comparing the training times in seconds.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- CODE CONCEPTS -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Key Code Concepts</h3>
+            </div>
+            <div class="section-box">
+                <p class="code-label">Snippet 1 — Device Context Managers for Benchmarking</p>
+                <div class="code-block">
+                    <pre><span class="kw">import</span> time
+
+<span class="cm"># Record start time</span>
+start_time_cpu = time.<span class="fn">time</span>()
+
+<span class="cm"># Force execution AND model initialization on CPU</span>
+<span class="kw">with</span> <span class="cls">tf</span>.<span class="fn">device</span>(<span class="str">'/CPU:0'</span>):
+    model_cpu = <span class="fn">build_deep_cnn</span>()
+    history_cpu = model_cpu.<span class="fn">fit</span>(train_images, train_labels,
+                                epochs=<span class="num">3</span>, batch_size=<span class="num">64</span>, verbose=<span class="num">1</span>)
+
+cpu_time = time.<span class="fn">time</span>() - start_time_cpu</pre>
+                </div>
+                <p>The <code>with tf.device()</code> block acts as a strict directive to TensorFlow. It overrides any
+                    automatic hardware allocation and forces the underlying C++ backend to allocate memory and execute
+                    mathematical operations strictly on the specified processor. The <code>build_deep_cnn()</code>
+                    function <em>must</em> be called inside the block so the initial weight tensors are created on the
+                    correct device.</p>
+
+                <p class="code-label">Snippet 2 — Modular Model Builder</p>
+                <div class="code-block">
+                    <pre><span class="kw">def</span> <span class="fn">build_deep_cnn</span>():
+    model = models.<span class="fn">Sequential</span>([
+        layers.<span class="fn">Conv2D</span>(<span class="num">32</span>, (<span class="num">3</span>, <span class="num">3</span>), activation=<span class="str">'relu'</span>, padding=<span class="str">'same'</span>, input_shape=(<span class="num">32</span>, <span class="num">32</span>, <span class="num">3</span>)),
+        layers.<span class="fn">BatchNormalization</span>(),
+        layers.<span class="fn">Conv2D</span>(<span class="num">32</span>, (<span class="num">3</span>, <span class="num">3</span>), activation=<span class="str">'relu'</span>, padding=<span class="str">'same'</span>),
+        layers.<span class="fn">MaxPooling2D</span>((<span class="num">2</span>, <span class="num">2</span>)),
+        layers.<span class="fn">Dropout</span>(<span class="num">0.25</span>),
+        <span class="cm"># ... additional Conv/Dense layers ...</span>
+        layers.<span class="fn">Dense</span>(<span class="num">10</span>, activation=<span class="str">'softmax'</span>)
+    ])
+    model.<span class="fn">compile</span>(optimizer=<span class="str">'adam'</span>, loss=<span class="str">'sparse_categorical_crossentropy'</span>, metrics=[<span class="str">'accuracy'</span>])
+    <span class="kw">return</span> model</pre>
+                </div>
+                <p>Defining the architecture inside a function is crucial for a fair A/B test. If we simply reused the
+                    same model variable, the GPU would start training from where the CPU left off (having already
+                    learned for 3 epochs), ruining the speed and accuracy comparison.</p>
+            </div>
+        </div>
+
+        <!-- EXPECTED OUTPUT -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Expected Output</h3>
+            </div>
+            <div class="section-box">
+                <p><strong>Device Detection:</strong> An initial printout confirming TensorFlow sees the GPU (e.g.,
+                    <code>GPU(s) detected: ['/physical_device:GPU:0']</code>).</p>
+                <p><strong>Training Logs:</strong> The CPU training logs will show significantly higher processing times
+                    per step (e.g., ~340ms/step) taking roughly 250 seconds per epoch. The GPU logs will blaze through
+                    at roughly ~18ms/step, taking under 10 seconds per epoch.</p>
+                <p><strong>Performance Result:</strong> A printed statement detailing the multiplier, for example:
+                    <code>Result: The GPU was 22.02x faster than the CPU!</code></p>
+                <p><strong>Visual Comparison Plot:</strong> A side-by-side bar chart clearly illustrating the massive
+                    disparity in total training time, with a tall red bar representing the CPU and a very short green
+                    bar representing the GPU.</p>
+            </div>
+        </div>
+
+        <!-- VIVA -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Viva Questions & Answers</h3>
+            </div>
+            <div class="section-box">
+                <div class="viva-item">
+                    <div class="viva-q">Q1. Why are GPUs significantly faster than CPUs for training Deep Learning
+                        models?</div>
+                    <div class="viva-a">While CPUs have a few very fast cores designed for complex, sequential tasks,
+                        GPUs are composed of thousands of smaller, specialized cores. Because neural network training
+                        heavily relies on matrix multiplications and convolutions—which are highly parallelizable math
+                        operations—the GPU can process thousands of these calculations simultaneously.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q2. What is the purpose of the tf.device('/CPU:0') context manager?</div>
+                    <div class="viva-a">By default, TensorFlow will automatically prioritize running operations on a GPU
+                        if one is detected. The tf.device() context manager overrides this behavior, explicitly forcing
+                        TensorFlow to allocate tensors and execute computational graphs on the specified hardware (in
+                        this case, the CPU) for benchmarking or debugging purposes.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q3. Why is it important to wrap the model creation inside the build_deep_cnn()
+                        function rather than creating one model globally?</div>
+                    <div class="viva-a">To conduct a fair performance comparison, both the CPU and GPU must train an
+                        identically structured model starting from completely randomized weights. Calling the builder
+                        function inside each hardware's execution block guarantees that a fresh, un-trained model is
+                        generated and properly allocated to that specific processor's memory.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q4. What is the role of the BatchNormalization layer in this CNN?</div>
+                    <div class="viva-a">Batch Normalization normalizes the activations of the previous layer (bringing
+                        the mean close to 0 and standard deviation close to 1) for each mini-batch during training. This
+                        stabilizes the learning process, mitigates the vanishing/exploding gradient problem, and
+                        generally allows the network to converge faster.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q5. In the dataset used (CIFAR-10), what do the dimensions (50000, 32, 32, 3)
+                        signify?</div>
+                    <div class="viva-a">These dimensions represent the shape of the training data tensor. '50000' is the
+                        total number of images in the training set. '32' and '32' represent the spatial height and width
+                        of each image in pixels. The '3' signifies the number of color channels (Red, Green, Blue)
+                        making it a full-color image.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>NIELIT Ropar · M.Tech AI · Deep Learning Techniques <span>DOAI250006</span> · Practical 11</p>
+    </footer>
+</body>
+
+</html>

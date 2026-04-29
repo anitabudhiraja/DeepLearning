@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P07 — ANN with Different Activation Functions | NIELIT Ropar</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --card: #16161f;
+            --border: #2a2a3a;
+            --accent: #00e5ff;
+            --accent2: #7c3aed;
+            --accent3: #f59e0b;
+            --text: #e8e8f0;
+            --muted: #7070a0;
+            --font-display: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-display);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(16px);
+        }
+
+        .logo-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .header-text h1 {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .header-text p {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            margin-left: auto;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 5px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 3rem 2rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pnum {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero h2 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h2 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .colab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(124, 58, 237, 0.15));
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .colab-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 58, 237, 0.25));
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .colab-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title h3 {
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border), transparent);
+        }
+
+        .section-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            opacity: 0.6;
+        }
+
+        p {
+            color: #c0c0d8;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        ol,
+        ul {
+            color: #c0c0d8;
+            padding-left: 1.5rem;
+            line-height: 1.8;
+        }
+
+        ol li,
+        ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #0d0d14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.7;
+            color: #c8e6ff;
+        }
+
+        .code-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .kw {
+            color: #c792ea;
+        }
+
+        .fn {
+            color: #82aaff;
+        }
+
+        .str {
+            color: #c3e88d;
+        }
+
+        .cm {
+            color: #546e7a;
+            font-style: italic;
+        }
+
+        .num {
+            color: #f78c6c;
+        }
+
+        .cls {
+            color: #ffcb6b;
+        }
+
+        .viva-item {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 0;
+        }
+
+        .viva-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .viva-q {
+            font-weight: 700;
+            color: var(--accent3);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .viva-a {
+            color: #c0c0d8;
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        .prereq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .prereq-tag {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+            color: #a78bfa;
+        }
+
+        /* Activation function comparison cards */
+        .actf-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.25rem 0;
+        }
+
+        .actf-card {
+            background: #0d0d14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .actf-card .actf-name {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+
+        .actf-card .actf-formula {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+            padding: 0.3rem 0.6rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .actf-card .actf-range {
+            font-size: 0.72rem;
+            color: #a78bfa;
+            margin-bottom: 0.5rem;
+        }
+
+        .actf-card .actf-desc {
+            font-size: 0.78rem;
+            color: #c0c0d8;
+            line-height: 1.6;
+        }
+
+        /* Comparison table */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.82rem;
+        }
+
+        .compare-table th,
+        .compare-table td {
+            border: 1px solid var(--border);
+            padding: 0.7rem 0.9rem;
+            text-align: left;
+        }
+
+        .compare-table th {
+            background: rgba(124, 58, 237, 0.1);
+            color: #a78bfa;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .compare-table td {
+            color: #c0c0d8;
+        }
+
+        .compare-table tr:hover td {
+            background: rgba(0, 229, 255, 0.03);
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--muted);
+        }
+
+        footer span {
+            color: var(--accent);
+        }
+
+        @media(max-width:600px) {
+
+            .hero,
+            .content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .back-link span {
+                display: none;
+            }
+
+            .actf-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <base target="_blank">
+</head>
+
+<body>
+    <header>
+        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" /></div>
+        <div class="header-text">
+            <h1>NIELIT Ropar</h1>
+            <p>Deep Learning Techniques &middot; DOAI250006</p>
+        </div>
+        <a href="index.html" class="back-link">&larr; Back</a>
+    </header>
+
+    <section class="hero">
+        <p class="pnum">// Practical &mdash; 07</p>
+        <h2>ANN using Backpropagation<br /><span>with Sigmoid, Tanh &amp; ReLU Activation Functions</span></h2>
+        <a href="https://colab.research.google.com/drive/18LwFAFCeuLJm4FbHTMFPBuzjIhb-CXkz?usp=sharing" target="_blank"
+            class="colab-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+            </svg>
+            Open in Colab
+        </a>
+    </section>
+
+    <div class="content">
+
+        <!-- AIM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Aim</h3>
+            </div>
+            <div class="section-box">
+                <p>To implement and compare the effect of three fundamental activation functions &mdash;
+                    <strong>Sigmoid</strong>, <strong>Tanh</strong>, and <strong>ReLU</strong> &mdash; on the training
+                    dynamics and convergence behavior of an Artificial Neural Network trained via backpropagation on the
+                    MNIST dataset. By keeping all other hyperparameters (architecture, optimizer settings, loss
+                    function,
+                    initialization) strictly identical and varying only the hidden-layer activation function, this
+                    practical isolates and quantifies the impact of activation function choice on learning speed and
+                    final model accuracy.
+                </p>
+            </div>
+        </div>
+
+        <!-- PREREQUISITES -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Prerequisites</h3>
+            </div>
+            <div class="section-box">
+                <div class="prereq-grid">
+                    <div class="prereq-tag">Python &amp; NumPy</div>
+                    <div class="prereq-tag">TensorFlow / Keras</div>
+                    <div class="prereq-tag">MNIST Dataset</div>
+                    <div class="prereq-tag">Backpropagation</div>
+                    <div class="prereq-tag">Activation Functions</div>
+                    <div class="prereq-tag">Vanishing Gradient Problem</div>
+                    <div class="prereq-tag">SGD Optimizer</div>
+                    <div class="prereq-tag">Matplotlib Visualization</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THEORY -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Theory</h3>
+            </div>
+            <div class="section-box">
+                <p>An <strong>activation function</strong> is a non-linear mathematical transformation applied to the
+                    weighted sum of inputs in a neural network neuron: <em>a = f(z) = f(W&middot;x + b)</em>. Without
+                    activation functions, a neural network would reduce to a linear model regardless of depth, since the
+                    composition of linear functions is itself linear. The non-linearity introduced by activation
+                    functions enables neural networks to approximate arbitrary continuous functions (the
+                    <strong>universal
+                        approximation theorem</strong>) and to learn complex decision boundaries for tasks like image
+                    classification, speech recognition, and natural language processing.</p>
+
+                <p>During <strong>backpropagation</strong>, the gradient of the loss with respect to each weight is
+                    computed using the chain rule. For a weight in layer l, the gradient is:
+                    <em>&part;L/&part;W<sup>(l)</sup> = &part;L/&part;a<sup>(l)</sup> &middot;
+                        f'(z<sup>(l)</sup>) &middot; x<sup>(l&minus;1)T</sup></em>. The term
+                    <strong>f'(z<sup>(l)</sup>)</strong> &mdash; the derivative of the activation function &mdash;
+                    is critical. If this derivative is consistently small (close to zero), gradients diminish
+                    exponentially as they propagate backward through many layers, causing weights in early layers to
+                    update negligibly. This is the <strong>vanishing gradient problem</strong>, which prevents deep
+                    networks from learning effectively.
+                </p>
+
+                <!-- Activation Function Cards -->
+                <div class="actf-grid">
+                    <div class="actf-card">
+                        <div class="actf-name" style="color: #f59e0b;">Sigmoid</div>
+                        <div class="actf-formula">&sigma;(z) = 1 / (1 + e<sup>&minus;z</sup>)</div>
+                        <div class="actf-range">Output Range: (0, 1)</div>
+                        <div class="actf-desc">S-shaped curve. Maximum derivative is 0.25 at z=0, causing severe
+                            gradient vanishing in deep networks. Outputs are not zero-centered.</div>
+                    </div>
+                    <div class="actf-card">
+                        <div class="actf-name" style="color: #00e5ff;">Tanh</div>
+                        <div class="actf-formula">tanh(z) = (e<sup>z</sup> &minus; e<sup>&minus;z</sup>) /
+                            (e<sup>z</sup> + e<sup>&minus;z</sup>)</div>
+                        <div class="actf-range">Output Range: (&minus;1, 1)</div>
+                        <div class="actf-desc">Zero-centered S-shaped curve. Max derivative is 1.0 at z=0, stronger
+                            gradients than Sigmoid. Still suffers from vanishing gradients for large |z|.</div>
+                    </div>
+                    <div class="actf-card">
+                        <div class="actf-name" style="color: #a78bfa;">ReLU</div>
+                        <div class="actf-formula">ReLU(z) = max(0, z)</div>
+                        <div class="actf-range">Output Range: [0, +&infin;)</div>
+                        <div class="actf-desc">Piecewise linear. Derivative is 1 for z&gt;0, 0 for z&lt;0. Eliminates
+                            vanishing gradient for positive activations. Computationally cheapest.</div>
+                    </div>
+                </div>
+
+                <p><strong>Sigmoid</strong> squashes any real-valued input into the range (0, 1), making it
+                    interpretable as a probability. Its derivative is <em>&sigma;'(z) = &sigma;(z)(1 &minus;
+                        &sigma;(z))</em>, which attains a maximum value of 0.25 at z = 0. For inputs far from zero
+                    (saturated neurons), the derivative approaches zero, causing gradients to vanish. Additionally,
+                    Sigmoid outputs are always positive (not zero-centered), which means gradients during
+                    backpropagation are either all positive or all negative, creating inefficient zigzag paths in the
+                    weight space.</p>
+
+                <p><strong>Tanh</strong> (hyperbolic tangent) maps inputs to (&minus;1, 1). Its derivative is
+                    <em>tanh'(z) = 1 &minus; tanh&sup2;(z)</em>, with a maximum of 1.0 at z = 0 &mdash; four times
+                    larger than Sigmoid's peak. This means Tanh propagates stronger gradients and typically converges
+                    faster. The zero-centered output also helps: both positive and negative gradients can flow,
+                    enabling more direct optimization paths. However, like Sigmoid, Tanh still saturates for large |z|,
+                    causing vanishing gradients in very deep networks.
+                </p>
+
+                <p><strong>ReLU</strong> (Rectified Linear Unit) is defined as <em>f(z) = max(0, z)</em>. For positive
+                    inputs, it acts as a linear identity function with derivative 1 &mdash; the maximum possible. This
+                    completely eliminates the vanishing gradient problem for active (positive) neurons, allowing deep
+                    networks to train effectively. ReLU is also computationally trivial: no exponentials or divisions,
+                    just a threshold comparison. The trade-off is the <strong>dying ReLU</strong> problem: if a neuron's
+                    weights are initialized such that it always receives negative inputs, its gradient is permanently
+                    zero and the neuron never learns. Variants like Leaky ReLU address this with a small negative slope.
+                </p>
+
+                <p>This practical uses <strong>Stochastic Gradient Descent (SGD)</strong> as the optimizer rather than
+                    Adam. SGD has a fixed learning rate and no momentum/RMSprop adaptations, making the optimizer
+                    behavior consistent across all three activation functions. This isolates the effect of activation
+                    choice: any differences in convergence speed and final accuracy are attributable solely to the
+                    activation function's gradient flow properties, not to optimizer-specific adaptive behaviors.</p>
+            </div>
+        </div>
+
+        <!-- ALGORITHM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Algorithm / Step-by-Step</h3>
+            </div>
+            <div class="section-box">
+                <ol>
+                    <li>Import <code>tensorflow</code> and <code>matplotlib.pyplot</code>.</li>
+                    <li>Load the MNIST dataset using <code>tf.keras.datasets.mnist.load_data()</code>, which returns
+                        training and test splits of 28&times;28 grayscale images with integer labels 0&ndash;9.</li>
+                    <li>Normalize pixel values from [0, 255] to [0.0, 1.0] by dividing both train and test sets by
+                        255.0. This scaling is essential for stable gradient flow with Sigmoid and Tanh activations.
+                    </li>
+                    <li>Define a <code>build_and_train_model(activation_function_name, epochs)</code> function that:
+                        <ul>
+                            <li>Prints the activation function being tested for clear logging.</li>
+                            <li>Builds a <code>Sequential</code> model with:
+                                <code>Flatten(input_shape=(28,28))</code> &rarr;
+                                <code>Dense(128, activation=activation_function_name)</code> &rarr;
+                                <code>Dense(10, activation='softmax')</code>.
+                            </li>
+                            <li>Compiles with <code>optimizer='sgd'</code>,
+                                <code>loss='sparse_categorical_crossentropy'</code>, <code>metrics=['accuracy']</code>.
+                            </li>
+                            <li>Trains with <code>model.fit()</code> for the specified epochs, using
+                                <code>validation_split=0.1</code> (10% of training data held out for validation) and
+                                <code>verbose=0</code> for clean output.
+                            </li>
+                            <li>Evaluates on the test set and prints final test accuracy.</li>
+                            <li>Returns the <code>history</code> object containing per-epoch metrics.</li>
+                        </ul>
+                    </li>
+                    <li>Create a list of activation functions to test:
+                        <code>['sigmoid', 'tanh', 'relu']</code>.
+                    </li>
+                    <li>Iterate over each activation function, call <code>build_and_train_model()</code> with
+                        <code>epochs=15</code>, and store the returned history in a dictionary keyed by function name.
+                    </li>
+                    <li>Create a Matplotlib figure (10&times;6 inches) and plot the validation accuracy curve for each
+                        activation function on the same axes, with a legend, grid, and descriptive title.</li>
+                    <li>Analyze the plot: ReLU should show the steepest initial rise and highest final accuracy,
+                        Tanh should converge faster than Sigmoid but slower than ReLU, and Sigmoid should exhibit the
+                        slowest convergence due to its weak gradient signal.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- CODE CONCEPTS -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Key Code Concepts</h3>
+            </div>
+            <div class="section-box">
+
+                <p class="code-label">Snippet 1 &mdash; Data Loading and Normalization</p>
+                <div class="code-block">
+                    <pre><span class="cm"># Load MNIST — 60,000 train + 10,000 test grayscale images</span>
+mnist = tf.keras.datasets.mnist
+(x_train, y_train), (x_test, y_test) = mnist.<span class="fn">load_data</span>()
+
+<span class="cm"># Normalize to [0, 1] — critical for Sigmoid/Tanh saturation</span>
+x_train, x_test = x_train / <span class="num">255.0</span>, x_test / <span class="num">255.0</span>
+
+<span class="fn">print</span>(<span class="str">f'Training data shape: {x_train.shape}'</span>)
+<span class="cm"># Output: (60000, 28, 28)</span></pre>
+                </div>
+                <p>Normalization to [0, 1] is especially important when using Sigmoid and Tanh activations. Sigmoid
+                    outputs range (0, 1), and if raw pixel values [0, 255] were fed directly, the weighted sum z =
+                    W&middot;x + b would be extremely large, pushing the Sigmoid deep into saturation where its
+                    derivative is nearly zero. Normalization keeps z in a reasonable range, ensuring the activation
+                    operates in its high-gradient region near z = 0. ReLU is less sensitive to input scale but still
+                    benefits from normalization for stable training.</p>
+
+                <p class="code-label">Snippet 2 &mdash; Controlled Model Builder Function</p>
+                <div class="code-block">
+                    <pre><span class="kw">def</span> <span class="fn">build_and_train_model</span>(activation_name, epochs=<span class="num">15</span>):
+    <span class="fn">print</span>(<span class="str">f"\n--- Training with {activation_name.upper()} --"</span>)
+
+    model = tf.keras.models.<span class="cls">Sequential</span>([
+        tf.keras.layers.<span class="cls">Flatten</span>(input_shape=(<span class="num">28</span>, <span class="num">28</span>)),
+        <span class="cm"># Hidden layer: 128 neurons, injectable activation</span>
+        tf.keras.layers.<span class="cls">Dense</span>(<span class="num">128</span>, activation=activation_name),
+        tf.keras.layers.<span class="cls">Dense</span>(<span class="num">10</span>, activation=<span class="str">'softmax'</span>)
+    ])
+
+    model.<span class="fn">compile</span>(
+        optimizer=<span class="str">'sgd'</span>,                    <span class="cm"># Fixed learning rate, no adaptivity</span>
+        loss=<span class="str">'sparse_categorical_crossentropy'</span>,
+        metrics=[<span class="str">'accuracy'</span>]
+    )
+
+    history = model.<span class="fn">fit</span>(
+        x_train, y_train,
+        epochs=epochs,
+        validation_split=<span class="num">0.1</span>,            <span class="cm"># 6,000 images for validation</span>
+        verbose=<span class="num">0</span>
+    )
+
+    test_loss, test_acc = model.<span class="fn">evaluate</span>(x_test, y_test, verbose=<span class="num">0</span>)
+    <span class="fn">print</span>(<span class="str">f"Test Accuracy ({activation_name}): {test_acc:.4f}"</span>)
+
+    <span class="kw">return</span> history</pre>
+                </div>
+                <p>The <code>build_and_train_model</code> function enforces a <strong>controlled experiment</strong>:
+                    every hyperparameter except the activation function is held constant. The architecture is a simple
+                    one-hidden-layer network (Flatten &rarr; Dense 128 &rarr; Dense 10) with approximately
+                    101,770 trainable parameters. Using SGD instead of Adam is deliberate &mdash; Adam's adaptive
+                    learning rates could mask the differences between activation functions by compensating for weak
+                    gradients. SGD's fixed learning rate makes the gradient flow properties of each activation directly
+                    observable in the learning curves.</p>
+
+                <p class="code-label">Snippet 3 &mdash; Training All Three Models and Comparing</p>
+                <div class="code-block">
+                    <pre><span class="cm"># Test all three activation functions</span>
+activation_functions = [<span class="str">'sigmoid'</span>, <span class="str">'tanh'</span>, <span class='str'>'relu'</span>]
+histories = {}
+
+<span class="kw">for</span> func <span class="kw">in</span> activation_functions:
+    histories[func] = <span class="fn">build_and_train_model</span>(func, epochs=<span class="num">15</span>)
+
+<span class="cm"># ── Results (typical) ──</span>
+<span class="cm"># Test Accuracy (sigmoid): ~0.9200</span>
+<span class="cm"># Test Accuracy (tanh):    ~0.9650</span>
+<span class="cm"># Test Accuracy (relu):    ~0.9750</span></pre>
+                </div>
+                <p>The function is called three times, each with a different activation string. Keras resolves the
+                    string to the corresponding activation function internally. The histories dictionary maps each
+                    function name to its training history object, which contains per-epoch arrays for loss, accuracy,
+                    val_loss, and val_accuracy. Storing all three histories enables direct comparison on the same plot.
+                    Typical results show ReLU achieving the highest test accuracy (~97&ndash;98%), Tanh performing
+                    slightly lower (~96&ndash;97%), and Sigmoid lagging behind (~92&ndash;94%) after 15 epochs.</p>
+
+                <p class="code-label">Snippet 4 &mdash; Visualization of Validation Accuracy</p>
+                <div class="code-block">
+                    <pre><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+plt.<span class="fn">figure</span>(figsize=(<span class="num">10</span>, <span class="num">6</span>))
+
+<span class="kw">for</span> func <span class="kw">in</span> activation_functions:
+    plt.<span class="fn">plot</span>(
+        histories[func].history[<span class="str">'val_accuracy'</span>],
+        label=func.<span class="fn">capitalize</span>()
+    )
+
+plt.<span class="fn">title</span>(<span class="str">'Validation Accuracy Comparison by Activation Function'</span>)
+plt.<span class="fn">ylabel</span>(<span class="str">'Accuracy'</span>)
+plt.<span class="fn">xlabel</span>(<span class="str">'Epoch'</span>)
+plt.<span class="fn">legend</span>(loc=<span class="str">"lower right"</span>)
+plt.<span class="fn">grid</span>(<span class="str">True</span>)
+plt.<span class="fn">show</span>()</pre>
+                </div>
+                <p>The plot visualizes the convergence dynamics of each activation function. The ReLU curve typically
+                    shows the steepest initial ascent in the first 2&ndash;3 epochs, rapidly reaching high validation
+                    accuracy. The Tanh curve rises more gradually but consistently outperforms Sigmoid. The Sigmoid
+                    curve has the shallowest slope, reflecting the weak gradient signals (max derivative 0.25) that
+                    slow weight updates. The <code>loc="lower right"</code> legend placement keeps it visible since
+                    all curves monotonically increase toward the top of the plot.</p>
+
+            </div>
+        </div>
+
+        <!-- EXPECTED OUTPUT -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Expected Output</h3>
+            </div>
+            <div class="section-box">
+                <p><strong>Console Output:</strong> Three training logs print sequentially, each showing the activation
+                    function name and final test accuracy. Expected approximate values after 15 epochs of SGD:</p>
+
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>Activation</th>
+                            <th>Test Accuracy</th>
+                            <th>Convergence Speed</th>
+                            <th>Key Characteristic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Sigmoid</strong></td>
+                            <td>~0.92 &ndash; 0.94</td>
+                            <td>Slowest</td>
+                            <td>Weak gradients (max &sigma;' = 0.25), non-zero-centered output</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tanh</strong></td>
+                            <td>~0.96 &ndash; 0.97</td>
+                            <td>Moderate</td>
+                            <td>Stronger gradients (max tanh' = 1.0), zero-centered output</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ReLU</strong></td>
+                            <td>~0.97 &ndash; 0.98</td>
+                            <td>Fastest</td>
+                            <td>No vanishing gradient for z &gt; 0, computationally efficient</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p><strong>Validation Accuracy Plot:</strong> A 10&times;6 inch line plot with three curves:</p>
+                <ul>
+                    <li><strong>ReLU (purple/blue):</strong> Steepest initial rise, reaching ~95% validation accuracy
+                        by epoch 5 and plateauing near ~97&ndash;98% by epoch 15.</li>
+                    <li><strong>Tanh (cyan):</strong> Moderate slope, reaching ~94% by epoch 5 and plateauing near
+                        ~96&ndash;97%. The curve is smooth and consistently above Sigmoid.</li>
+                    <li><strong>Sigmoid (orange):</strong> Shallowest slope, slowly climbing to ~92&ndash;94% by
+                        epoch 15. The curve may show more fluctuation due to weaker gradient signals.</li>
+                </ul>
+                <p>All curves should be monotonically increasing (or nearly so), with the gap between ReLU and Sigmoid
+                    widening in the early epochs and stabilizing in later epochs as all models approach their
+                    respective convergence plateaus.</p>
+            </div>
+        </div>
+
+        <!-- VIVA -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Viva Questions &amp; Answers</h3>
+            </div>
+            <div class="section-box">
+
+                <div class="viva-item">
+                    <div class="viva-q">Q1. Why does ReLU converge faster than Sigmoid and Tanh?</div>
+                    <div class="viva-a">ReLU converges faster because its derivative is 1 for all positive inputs,
+                        whereas Sigmoid's maximum derivative is only 0.25 and Tanh's maximum is 1.0. During
+                        backpropagation, the gradient flowing through a ReLU neuron is preserved at full strength
+                        (multiplied by 1) as long as the neuron is active (z &gt; 0). In contrast, Sigmoid's gradient
+                        is always attenuated by at least a factor of 4, and for saturated neurons (large |z|), it
+                        becomes vanishingly small. This stronger gradient signal means ReLU weights update more
+                        aggressively, leading to faster learning. Additionally, ReLU involves no exponential
+                        computations, making each forward and backward pass computationally cheaper.</div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q2. What is the vanishing gradient problem and which activation functions suffer
+                        from it?</div>
+                    <div class="viva-a">The vanishing gradient problem occurs during backpropagation when gradients
+                        become progressively smaller as they flow backward through many layers, causing early-layer
+                        weights to update negligibly. Both Sigmoid and Tanh suffer from this because they saturate:
+                        for large positive or negative inputs, their derivatives approach zero. Sigmoid is worse
+                        because its maximum derivative is only 0.25, so gradients are attenuated by at least 75% at
+                        every layer. Tanh is better (max derivative = 1.0) but still saturates. ReLU avoids this for
+                        positive inputs since its derivative is exactly 1, but it has its own issue: the "dying ReLU"
+                        problem, where neurons with consistently negative inputs have zero gradient and never learn.
+                    </div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q3. Why is the output of Sigmoid not zero-centered and why does this matter?
+                    </div>
+                    <div class="viva-a">Sigmoid outputs are always in the range (0, 1), meaning they are always
+                        positive. During backpropagation, the gradient with respect to the weights of a Sigmoid layer
+                        has the same sign as the gradient from the next layer (since &part;L/&part;W = &part;L/&part;a
+                        &middot; f'(z) &middot; x, and f'(z) &middot; x is always positive). This means all weight
+                        updates for a given neuron are either all positive or all negative, forcing the optimizer to
+                        take zigzag paths through the weight space to reach optimal values. Tanh outputs are
+                        zero-centered (&minus;1 to 1), allowing both positive and negative gradients, which enables
+                        more direct convergence paths. This is one reason Tanh typically outperforms Sigmoid.</div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q4. Why was SGD chosen as the optimizer instead of Adam for this comparison?
+                    </div>
+                    <div class="viva-a">SGD with a fixed learning rate was chosen to <strong>isolate the effect of
+                            activation function choice</strong>. Adam is an adaptive optimizer that independently
+                        adjusts
+                        the learning rate for each parameter based on first and second moment estimates of the
+                        gradients.
+                        Adam's adaptivity could compensate for weak gradients (as with Sigmoid) by increasing effective
+                        step sizes, potentially masking the true differences between activation functions. SGD's fixed
+                        learning rate makes the gradient flow properties of each activation directly observable in the
+                        learning curves &mdash; any differences in convergence speed and final accuracy are purely
+                        attributable to the activation function's derivative behavior during backpropagation.</div>
+                </div>
+
+                <div class="viva-item">
+                    <div class="viva-q">Q5. What is the dying ReLU problem and how is it addressed?</div>
+                    <div class="viva-a">The dying ReLU problem occurs when a ReLU neuron's weights are updated such
+                        that the weighted sum z = W&middot;x + b is consistently negative for all training inputs.
+                        Since ReLU outputs 0 for z &lt; 0 and its derivative is also 0 in this region, the gradient
+                        flowing back to this neuron is permanently zero. The neuron becomes "dead" &mdash; it never
+                        fires and never learns. This is particularly problematic with high learning rates or poor
+                        weight initialization. Solutions include: (1) <strong>Leaky ReLU</strong>, which uses a small
+                        negative slope &alpha; (e.g., 0.01) for z &lt; 0: f(z) = max(&alpha;z, z); (2)
+                        <strong>Parametric ReLU (PReLU)</strong>, where &alpha; is learned; (3) Better weight
+                        initialization schemes like He initialization, which accounts for ReLU's sparsity; and (4)
+                        using a lower learning rate to prevent large negative weight updates.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>NIELIT Ropar &middot; M.Tech AI &middot; Deep Learning Techniques <span>DOAI250006</span> &middot; Practical
+            07</p>
+    </footer>
+</body>
+
+</html>

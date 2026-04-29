@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deep Learning Techniques — Practical Lab</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+        rel="stylesheet" />
+    <link rel="icon" type="image/png" href="nielitlogo.png">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --card: #16161f;
+            --border: #2a2a3a;
+            --accent: #00e5ff;
+            --accent2: #7c3aed;
+            --accent3: #f59e0b;
+            --text: #e8e8f0;
+            --muted: #7070a0;
+            --font-display: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-display);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glow blobs */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-bottom {
+            position: fixed;
+            bottom: -200px;
+            left: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 2rem 2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+        }
+
+        .logo-wrap {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 6px;
+        }
+
+        .header-text h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .header-text p {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .header-badge {
+            margin-left: auto;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 4px 10px;
+            border-radius: 4px;
+            letter-spacing: 0.08em;
+        }
+
+        /* Hero */
+        .hero {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 4rem 2rem 2rem;
+        }
+
+        .hero-eyebrow {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeUp 0.6s 0.1s forwards;
+        }
+
+        .hero h2 {
+            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeUp 0.6s 0.2s forwards;
+        }
+
+        .hero h2 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: 0.95rem;
+            color: var(--muted);
+            max-width: 480px;
+            margin: 0 auto 2rem;
+            line-height: 1.7;
+            opacity: 0;
+            animation: fadeUp 0.6s 0.3s forwards;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            opacity: 0;
+            animation: fadeUp 0.6s 0.4s forwards;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent3);
+            font-family: var(--font-mono);
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 2px;
+        }
+
+        /* Grid */
+        .grid-section {
+            position: relative;
+            z-index: 1;
+            padding: 2rem 2rem 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border), transparent);
+        }
+
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Card */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            opacity: 0;
+            animation: fadeUp 0.5s forwards;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 229, 255, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 229, 255, 0.06);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        /* Stagger delays */
+        .card:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.10s;
+        }
+
+        .card:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+
+        .card:nth-child(4) {
+            animation-delay: 0.20s;
+        }
+
+        .card:nth-child(5) {
+            animation-delay: 0.25s;
+        }
+
+        .card:nth-child(6) {
+            animation-delay: 0.30s;
+        }
+
+        .card:nth-child(7) {
+            animation-delay: 0.35s;
+        }
+
+        .card:nth-child(8) {
+            animation-delay: 0.40s;
+        }
+
+        .card:nth-child(9) {
+            animation-delay: 0.45s;
+        }
+
+        .card:nth-child(10) {
+            animation-delay: 0.50s;
+        }
+
+        .card:nth-child(11) {
+            animation-delay: 0.55s;
+        }
+
+        .card-index {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-index::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 1.25rem;
+            color: var(--text);
+        }
+
+        /* Tags */
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.58rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .tag-blue {
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        .tag-purple {
+            background: rgba(124, 58, 237, 0.15);
+            color: #a78bfa;
+            border: 1px solid rgba(124, 58, 237, 0.3);
+        }
+
+        .tag-amber {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent3);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .tag-green {
+            background: rgba(52, 211, 153, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+
+        /* Action buttons */
+        .card-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-theory {
+            background: rgba(124, 58, 237, 0.15);
+            color: #a78bfa;
+            border: 1px solid rgba(124, 58, 237, 0.35);
+        }
+
+        .btn-theory:hover {
+            background: rgba(124, 58, 237, 0.3);
+            border-color: #7c3aed;
+            box-shadow: 0 0 16px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-code {
+            background: rgba(0, 229, 255, 0.08);
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 255, 0.25);
+        }
+
+        .btn-code:hover {
+            background: rgba(0, 229, 255, 0.18);
+            border-color: var(--accent);
+            box-shadow: 0 0 16px rgba(0, 229, 255, 0.25);
+        }
+
+        .btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 2rem;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+        }
+
+        footer span {
+            color: var(--accent);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h2 {
+                font-size: 2rem;
+            }
+
+            .hero-stats {
+                gap: 1rem;
+            }
+
+            .header-badge {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="glow-bottom"></div>
+
+    <header>
+        <div class="logo-wrap">
+            <img src="nielitlogo.png" alt="NIELIT Logo" />
+        </div>
+        <div class="header-text">
+            <h1>NIELIT Ropar</h1>
+            <p>M.Tech Artificial Intelligence · Deep Learning Techniques</p>
+        </div>
+        <div class="header-badge">LAB PORTAL</div>
+    </header>
+
+    <section class="hero">
+        <p class="hero-eyebrow">// Course: DOAI250006</p>
+        <h2>Deep Learning<br /><span>Techniques Lab</span></h2>
+        <p class="hero-sub">Hands-on practicals covering ANNs, CNNs, LSTMs, Autoencoders and more — powered by
+            TensorFlow &amp; Keras.</p>
+        <div class="hero-stats">
+            <div class="stat">
+                <div class="stat-num">11</div>
+                <div class="stat-label">Practicals</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num">6+</div>
+                <div class="stat-label">DL Topics</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num">Colab</div>
+                <div class="stat-label">Platform</div>
+            </div>
+        </div>
+    </section>
+
+    <main class="grid-section">
+        <div class="section-header">
+            <span class="section-label">Practical Experiments</span>
+            <div class="section-line"></div>
+        </div>
+
+        <div class="cards-grid">
+
+            <!-- P1 -->
+            <div class="card">
+                <div class="card-index">P — 01</div>
+                <div class="card-title">Loading and Visualizing the MNIST Handwritten Digit Dataset</div>
+                <div class="card-tags">
+                    <span class="tag tag-blue">MNIST</span>
+                    <span class="tag tag-purple">Visualization</span>
+                    <span class="tag tag-green">Data Loading</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical1.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/1YeLXXdDh0db9c4ToH6hnXBUrMShNLVTo?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P2 -->
+            <div class="card">
+                <div class="card-index">P — 02</div>
+                <div class="card-title">Classification of MNIST Handwritten Digits</div>
+                <div class="card-tags">
+                    <span class="tag tag-blue">MNIST</span>
+                    <span class="tag tag-purple">ANN</span>
+                    <span class="tag tag-amber">Classification</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical2.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/1KUa_y1A8lkVM2ZHIRWjTIu6b7wi4H7xo?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P3 -->
+            <div class="card">
+                <div class="card-index">P — 03</div>
+                <div class="card-title">Binary Classification Model for Disease Risk Prediction using ANN</div>
+                <div class="card-tags">
+                    <span class="tag tag-amber">Binary Classification</span>
+                    <span class="tag tag-purple">ANN</span>
+                    <span class="tag tag-green">Healthcare AI</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical3.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/1UVr3zdHpCHPEuJhL0uJuDRPWpV0pwU34?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P4 -->
+            <div class="card">
+                <div class="card-index">P — 04</div>
+                <div class="card-title">Image Classification using CNN — 2 Conv Layers on MNIST</div>
+                <div class="card-tags">
+                    <span class="tag tag-blue">CNN</span>
+                    <span class="tag tag-blue">MNIST</span>
+                    <span class="tag tag-amber">Conv Layers</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical4.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/1VDoQqDGIL0CYTsO9HORG56CLNbA6fyUF?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P5 -->
+            <div class="card">
+                <div class="card-index">P — 05</div>
+                <div class="card-title">Image Classification using CNN — 2 Conv Layers on CIFAR-10</div>
+                <div class="card-tags">
+                    <span class="tag tag-blue">CNN</span>
+                    <span class="tag tag-green">CIFAR-10</span>
+                    <span class="tag tag-amber">Conv Layers</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical5.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/1721GzFLE-nD8hCfsjOSpg_Qx7wIMQQjJ?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P6 -->
+            <div class="card">
+                <div class="card-index">P — 06</div>
+                <div class="card-title">Image Data Augmentation using Keras</div>
+                <div class="card-tags">
+                    <span class="tag tag-purple">Augmentation</span>
+                    <span class="tag tag-blue">Keras</span>
+                    <span class="tag tag-green">Regularization</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical6.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/1C9u0MgtQ9sZX3wxxA0Q7R7vhguR_owhd?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P7 -->
+            <div class="card">
+                <div class="card-index">P — 07</div>
+                <div class="card-title">ANN using Backpropagation with Different Activation Functions</div>
+                <div class="card-tags">
+                    <span class="tag tag-purple">Backpropagation</span>
+                    <span class="tag tag-amber">Activation Fn</span>
+                    <span class="tag tag-blue">ANN</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical7.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/18LwFAFCeuLJm4FbHTMFPBuzjIhb-CXkz?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P8 -->
+            <div class="card">
+                <div class="card-index">P — 08</div>
+                <div class="card-title">Deep Feedforward ANN with 4 Hidden Layers &amp; Backpropagation</div>
+                <div class="card-tags">
+                    <span class="tag tag-purple">Deep ANN</span>
+                    <span class="tag tag-amber">4 Hidden Layers</span>
+                    <span class="tag tag-green">Backpropagation</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical8.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/1muoS-_tQc6qzzhZTOrJsCAmIRbhgIQWh?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P9 -->
+            <div class="card">
+                <div class="card-index">P — 09</div>
+                <div class="card-title">Time Series Forecasting using Deep Learning with LSTM</div>
+                <div class="card-tags">
+                    <span class="tag tag-blue">LSTM</span>
+                    <span class="tag tag-amber">Time Series</span>
+                    <span class="tag tag-purple">Forecasting</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical9.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/1tsijfW7q7vilqNcS59uAc5vX3C_a8Zg_?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P10 -->
+            <div class="card">
+                <div class="card-index">P — 10</div>
+                <div class="card-title">Image Data Comparison using Autoencoder Neural Network on CIFAR-10</div>
+                <div class="card-tags">
+                    <span class="tag tag-purple">Autoencoder</span>
+                    <span class="tag tag-green">CIFAR-10</span>
+                    <span class="tag tag-blue">Reconstruction</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical10.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/12x0qOs5M27Vj_QEF2OwCNTrp7Wu2Ue6C?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+            <!-- P11 -->
+            <div class="card">
+                <div class="card-index">P — 11</div>
+                <div class="card-title">Deep CNN for Multiclass Image Classification — CPU vs GPU Performance</div>
+                <div class="card-tags">
+                    <span class="tag tag-blue">Deep CNN</span>
+                    <span class="tag tag-amber">GPU vs CPU</span>
+                    <span class="tag tag-green">Multiclass</span>
+                </div>
+                <div class="card-actions">
+                    <a href="theory_practical11.html" class="btn btn-theory">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M2 2h12v1H2zm0 3h9v1H2zm0 3h12v1H2zm0 3h7v1H2z" />
+                        </svg>
+                        Theory
+                    </a>
+                    <a href="https://colab.research.google.com/drive/1OktMIPrsFNaRGMaqRcmJRCtWiTYCS4bS?usp=sharing"
+                        target="_blank" class="btn btn-code">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M9.5 3l4.5 5-4.5 5-1-1.1L12.1 8 8.5 4.1zM6.5 3L2 8l4.5 5 1-1.1L3.9 8l3.6-3.9z" />
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <p>NIELIT Ropar · M.Tech AI · Deep Learning Techniques <span>DOAI250006</span> · Lab Portal</p>
+    </footer>
+</body>
+
+</html>

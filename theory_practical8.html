@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P08 — Deep Feedforward ANN | NIELIT Ropar</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --card: #16161f;
+            --border: #2a2a3a;
+            --accent: #00e5ff;
+            --accent2: #7c3aed;
+            --accent3: #f59e0b;
+            --text: #e8e8f0;
+            --muted: #7070a0;
+            --font-display: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-display);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(16px);
+        }
+
+        .logo-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .header-text h1 {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .header-text p {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            margin-left: auto;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 5px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 3rem 2rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pnum {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero h2 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h2 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .colab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(124, 58, 237, 0.15));
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .colab-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 58, 237, 0.25));
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .colab-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title h3 {
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border), transparent);
+        }
+
+        .section-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            opacity: 0.6;
+        }
+
+        p {
+            color: #c0c0d8;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        ol,
+        ul {
+            color: #c0c0d8;
+            padding-left: 1.5rem;
+            line-height: 1.8;
+        }
+
+        ol li,
+        ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #0d0d14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.7;
+            color: #c8e6ff;
+        }
+
+        .code-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .kw {
+            color: #c792ea;
+        }
+
+        .fn {
+            color: #82aaff;
+        }
+
+        .str {
+            color: #c3e88d;
+        }
+
+        .cm {
+            color: #546e7a;
+            font-style: italic;
+        }
+
+        .num {
+            color: #f78c6c;
+        }
+
+        .cls {
+            color: #ffcb6b;
+        }
+
+        .viva-item {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 0;
+        }
+
+        .viva-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .viva-q {
+            font-weight: 700;
+            color: var(--accent3);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .viva-a {
+            color: #c0c0d8;
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        .prereq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .prereq-tag {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+            color: #a78bfa;
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--muted);
+        }
+
+        footer span {
+            color: var(--accent);
+        }
+
+        @media(max-width:600px) {
+
+            .hero,
+            .content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .back-link span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo-wrap"><img src="nielitlogo.png" alt="NIELIT" onerror="this.style.display='none'"></div>
+        <div class="header-text">
+            <h1>NIELIT Ropar</h1>
+            <p>Deep Learning Techniques · DOAI250006</p>
+        </div>
+        <a href="index.html" class="back-link">← Back</a>
+    </header>
+
+    <section class="hero">
+        <p class="pnum">// Practical — 08</p>
+        <h2>Implementation of Deep Feed Forward<br /><span>ANN with 4 Hidden Layers</span></h2>
+        <a href="https://colab.research.google.com/drive/1muoS-_tQc6qzzhZTOrJsCAmIRbhgIQWh?usp=sharing" target="_blank"
+            class="colab-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+            </svg>
+            Open in Colab
+        </a>
+    </section>
+
+    <div class="content">
+        <!-- AIM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Aim</h3>
+            </div>
+            <div class="section-box">
+                <p>To construct, train, and evaluate a Deep Feedforward Artificial Neural Network (ANN) featuring
+                    exactly four hidden layers using backpropagation to classify articles of clothing from the Fashion
+                    MNIST dataset.</p>
+            </div>
+        </div>
+
+        <!-- PREREQUISITES -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Prerequisites</h3>
+            </div>
+            <div class="section-box">
+                <div class="prereq-grid">
+                    <div class="prereq-tag">Python Programming</div>
+                    <div class="prereq-tag">TensorFlow / Keras</div>
+                    <div class="prereq-tag">Neural Network Architectures</div>
+                    <div class="prereq-tag">Backpropagation</div>
+                    <div class="prereq-tag">Gradient Descent Optimization</div>
+                    <div class="prereq-tag">Multi-class Classification</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THEORY -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Theory</h3>
+            </div>
+            <div class="section-box">
+                <p>A <strong>Deep Feedforward Neural Network</strong> (or Multilayer Perceptron) consists of an input
+                    layer, an output layer, and multiple hidden layers (in this experiment, exactly four). The term
+                    "deep" specifically refers to having more than one hidden layer, which allows the network to learn
+                    hierarchical and more complex feature representations of the input data.</p>
+                <p>The network learns through an algorithm called <strong>Backpropagation</strong>. During training, the
+                    forward pass calculates the network's prediction and the resulting loss (error). Backpropagation
+                    then moves backward through the network, computing the gradient of the loss with respect to each
+                    weight using the chain rule of calculus. An optimizer like <strong>Adam</strong> uses these
+                    gradients to update the weights, minimizing the overall loss over multiple iterations (epochs).</p>
+                <p>A common architectural design in deep ANNs is to use a <strong>funnel structure</strong>. The first
+                    hidden layer has a large number of neurons, and subsequent layers progressively decrease in size
+                    (e.g., 256 → 128 → 64 → 32). This acts as a form of feature compression, forcing the network to
+                    distill the high-dimensional raw pixel data into low-dimensional, highly discriminative semantic
+                    features before the final classification layer.</p>
+                <p>In this practical, we utilize the <strong>Fashion MNIST</strong> dataset. It serves as a direct
+                    drop-in replacement for the original MNIST dataset, containing 70,000 28x28 grayscale images
+                    representing 10 different categories of clothing (e.g., T-shirts, trousers, sneakers). It poses a
+                    slightly harder challenge for simple ANNs compared to handwritten digits.</p>
+            </div>
+        </div>
+
+        <!-- ALGORITHM -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Algorithm / Step-by-Step</h3>
+            </div>
+            <div class="section-box">
+                <ol>
+                    <li>Import the <code>tensorflow</code> and <code>matplotlib.pyplot</code> libraries.</li>
+                    <li>Load the Fashion MNIST dataset using <code>keras.datasets.fashion_mnist.load_data()</code>.</li>
+                    <li>Normalize the image pixel values from the range [0, 255] to [0.0, 1.0] to facilitate stable
+                        gradient descent.</li>
+                    <li>Initialize a <code>Sequential</code> model.</li>
+                    <li>Add a <code>Flatten</code> layer to unroll the 28x28 2D images into a 784-element 1D array.</li>
+                    <li>Add <strong>four sequential hidden Dense layers</strong> with decreasing units (256, 128, 64,
+                        32) and apply the <code>ReLU</code> activation function to each.</li>
+                    <li>Add an output <code>Dense</code> layer with 10 units (for the 10 clothing classes) using a
+                        <code>softmax</code> activation function.
+                    </li>
+                    <li>Compile the model using the <code>'adam'</code> optimizer,
+                        <code>'sparse_categorical_crossentropy'</code> loss, and <code>'accuracy'</code> metrics.
+                    </li>
+                    <li>Train the model using <code>model.fit()</code> on the training data for 15 epochs, setting aside
+                        20% of the data for validation.</li>
+                    <li>Plot the training and validation accuracy curves over the epochs.</li>
+                    <li>Evaluate final model performance on the unseen test dataset.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- CODE CONCEPTS -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Key Code Concepts</h3>
+            </div>
+            <div class="section-box">
+                <p class="code-label">Snippet 1 — Defining the 4-Hidden-Layer Architecture</p>
+                <div class="code-block">
+                    <pre>model = <span class="cls">tf</span>.keras.models.<span class="fn">Sequential</span>([
+    <span class="cm"># Input layer</span>
+    <span class="cls">tf</span>.keras.layers.<span class="fn">Flatten</span>(input_shape=(<span class="num">28</span>, <span class="num">28</span>)),
+
+    <span class="cm"># Hidden Layer 1</span>
+    <span class="cls">tf</span>.keras.layers.<span class="fn">Dense</span>(<span class="num">256</span>, activation=<span class="str">'relu'</span>, name=<span class="str">'Hidden_Layer_1'</span>),
+    <span class="cm"># Hidden Layer 2</span>
+    <span class="cls">tf</span>.keras.layers.<span class="fn">Dense</span>(<span class="num">128</span>, activation=<span class="str">'relu'</span>, name=<span class="str">'Hidden_Layer_2'</span>),
+    <span class="cm"># Hidden Layer 3</span>
+    <span class="cls">tf</span>.keras.layers.<span class="fn">Dense</span>(<span class="num">64</span>, activation=<span class="str">'relu'</span>, name=<span class="str">'Hidden_Layer_3'</span>),
+    <span class="cm"># Hidden Layer 4</span>
+    <span class="cls">tf</span>.keras.layers.<span class="fn">Dense</span>(<span class="num">32</span>, activation=<span class="str">'relu'</span>, name=<span class="str">'Hidden_Layer_4'</span>),
+
+    <span class="cm"># Output Layer (10 classes for Fashion MNIST)</span>
+    <span class="cls">tf</span>.keras.layers.<span class="fn">Dense</span>(<span class="num">10</span>, activation=<span class="str">'softmax'</span>, name=<span class="str">'Output_Layer'</span>)
+])</pre>
+                </div>
+                <p>This snippet explicitly defines a multi-layer perceptron. The <code>Flatten</code> layer is mandatory
+                    to convert 2D image data into the 1D vector required by standard <code>Dense</code> layers. Naming
+                    the layers helps clarify the structure when printing the model summary.</p>
+
+                <p class="code-label">Snippet 2 — Compiling and Training with Backpropagation</p>
+                <div class="code-block">
+                    <pre>model.<span class="fn">compile</span>(optimizer=<span class="str">'adam'</span>,
+              loss=<span class="str">'sparse_categorical_crossentropy'</span>,
+              metrics=[<span class="str">'accuracy'</span>])
+
+<span class="cm"># Train the model and save the history</span>
+history = model.<span class="fn">fit</span>(x_train, y_train,
+                    epochs=<span class="num">15</span>,
+                    batch_size=<span class="num">32</span>,
+                    validation_split=<span class="num">0.2</span>)</pre>
+                </div>
+                <p>The <strong>compile</strong> method defines the backpropagation mechanics. <code>adam</code> is a
+                    popular adaptive learning rate optimization algorithm. <code>sparse_categorical_crossentropy</code>
+                    is used because our labels are integers (0-9) rather than one-hot encoded vectors. Training tracks
+                    history to allow for post-training visualization of learning curves.</p>
+            </div>
+        </div>
+
+        <!-- EXPECTED OUTPUT -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Expected Output</h3>
+            </div>
+            <div class="section-box">
+                <p><strong>Model Summary:</strong> A tabular breakdown of the network showing 1 Flatten layer, 4 Dense
+                    hidden layers progressively decreasing in parameters, and 1 Dense output layer. Total trainable
+                    parameters will be around 242,000.</p>
+                <p><strong>Training Logs:</strong> Text output for 15 epochs showing decreasing <code>loss</code> and
+                    <code>val_loss</code> alongside increasing <code>accuracy</code> and <code>val_accuracy</code>.
+                </p>
+                <p><strong>Visualization:</strong> A line plot containing two lines (Train and Validation Accuracy)
+                    curving upwards and plateuing as epochs increase, demonstrating the model's learning trajectory and
+                    highlighting any potential overfitting.</p>
+                <p><strong>Test Accuracy:</strong> A final printed console line displaying the test accuracy (typically
+                    hovering around 88% - 89% for Fashion MNIST with this architecture).</p>
+            </div>
+        </div>
+
+        <!-- VIVA -->
+        <div class="section">
+            <div class="section-title">
+                <h3>Viva Questions & Answers</h3>
+            </div>
+            <div class="section-box">
+                <div class="viva-item">
+                    <div class="viva-q">Q1. What makes a neural network "deep"?</div>
+                    <div class="viva-a">A neural network is considered "deep" when it has multiple hidden layers between
+                        the input and output layers. In contrast, a "shallow" network typically has only one hidden
+                        layer. The depth allows the network to learn increasingly abstract representations of the data.
+                    </div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q2. Why do we progressively reduce the number of neurons in the hidden layers
+                        (256 -> 128 -> 64 -> 32)?</div>
+                    <div class="viva-a">This "funnel" or "bottleneck" architecture forces the network to compress the
+                        information. As data moves through the layers, the network is forced to discard noise and retain
+                        only the most critical, high-level features necessary for classification, which also helps
+                        reduce computational cost and overfitting.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q3. What is the role of backpropagation in this model?</div>
+                    <div class="viva-a">Backpropagation calculates the gradient of the loss function with respect to the
+                        network's weights. By recursively applying the chain rule from the output layer back to the
+                        input layer, it determines how much each weight contributed to the error, allowing the optimizer
+                        (Adam) to adjust the weights in the correct direction.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q4. Why are we using 'sparse_categorical_crossentropy' instead of
+                        'categorical_crossentropy'?</div>
+                    <div class="viva-a">We use 'sparse_categorical_crossentropy' when our target labels are provided as
+                        integers (e.g., 0, 1, 2... 9). If we had manually converted our labels into one-hot encoded
+                        binary arrays (e.g., [0, 0, 1, 0...]), we would use 'categorical_crossentropy'. The 'sparse'
+                        version saves memory and computation.</div>
+                </div>
+                <div class="viva-item">
+                    <div class="viva-q">Q5. What is the purpose of the Flatten layer at the start of the model?</div>
+                    <div class="viva-a">Standard Dense (fully connected) layers require 1-dimensional input arrays.
+                        Because the Fashion MNIST images are 2-dimensional (28x28 pixels), the Flatten layer simply
+                        reshapes the 2D matrix into a 1D vector of 784 elements (28 * 28 = 784) without altering the
+                        actual data.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>NIELIT Ropar · M.Tech AI · Deep Learning Techniques <span>DOAI250006</span> · Practical 08</p>
+    </footer>
+</body>
+
+</html>
